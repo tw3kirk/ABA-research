@@ -14,8 +14,11 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.0",
+    "@types/node": "^20.19.31",
     "tsx": "^4.21.0",
     "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3"
   }
 }
