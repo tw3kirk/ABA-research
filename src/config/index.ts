@@ -13,6 +13,9 @@ import {
 
 export { ConfigError } from "./env.js";
 
+// Re-export research configuration module
+export * from "./research/index.js";
+
 export interface AppConfig {
   /** Current environment (development, production, test) */
   readonly env: string;
