@@ -1,0 +1,135 @@
+{
+  "version": "1.0.0",
+  "topics": [
+    {
+      "id": "acne_treatment_options",
+      "name": "Acne Treatment Options",
+      "description": "Comprehensive overview of acne treatment approaches including topical, oral, and procedural options.",
+      "condition": "acne",
+      "category": "treatment_options",
+      "priority": "high",
+      "status": "active",
+      "tags": ["common", "pharmaceutical", "otc"]
+    },
+    {
+      "id": "acne_pathophysiology",
+      "name": "Acne Pathophysiology",
+      "description": "Understanding the biological mechanisms underlying acne development.",
+      "condition": "acne",
+      "category": "pathophysiology",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["science", "mechanisms"]
+    },
+    {
+      "id": "acne_lifestyle_factors",
+      "name": "Lifestyle Factors in Acne",
+      "description": "Diet, stress, sleep, and other lifestyle factors affecting acne.",
+      "condition": "acne",
+      "category": "lifestyle_factors",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["diet", "stress", "holistic"]
+    },
+    {
+      "id": "eczema_treatment_options",
+      "name": "Eczema Treatment Options",
+      "description": "Treatment approaches for eczema including moisturizers, topical steroids, and biologics.",
+      "condition": "eczema",
+      "category": "treatment_options",
+      "priority": "high",
+      "status": "active",
+      "tags": ["common", "pharmaceutical", "biologics"]
+    },
+    {
+      "id": "eczema_prevention",
+      "name": "Eczema Prevention Strategies",
+      "description": "Preventive measures and trigger avoidance for eczema management.",
+      "condition": "eczema",
+      "category": "prevention",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["triggers", "prevention"]
+    },
+    {
+      "id": "eczema_patient_education",
+      "name": "Eczema Patient Education",
+      "description": "Educational content for patients and caregivers about eczema management.",
+      "condition": "eczema",
+      "category": "patient_education",
+      "priority": "high",
+      "status": "active",
+      "tags": ["education", "self-care"]
+    },
+    {
+      "id": "psoriasis_treatment_options",
+      "name": "Psoriasis Treatment Options",
+      "description": "Treatment landscape for psoriasis including topicals, phototherapy, and systemics.",
+      "condition": "psoriasis",
+      "category": "treatment_options",
+      "priority": "high",
+      "status": "active",
+      "tags": ["common", "biologics", "phototherapy"]
+    },
+    {
+      "id": "psoriasis_pathophysiology",
+      "name": "Psoriasis Pathophysiology",
+      "description": "Immune mechanisms and genetic factors in psoriasis.",
+      "condition": "psoriasis",
+      "category": "pathophysiology",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["science", "immunology", "genetics"]
+    },
+    {
+      "id": "rosacea_treatment_options",
+      "name": "Rosacea Treatment Options",
+      "description": "Management approaches for different rosacea subtypes.",
+      "condition": "rosacea",
+      "category": "treatment_options",
+      "priority": "high",
+      "status": "active",
+      "tags": ["subtypes", "pharmaceutical"]
+    },
+    {
+      "id": "rosacea_lifestyle_factors",
+      "name": "Lifestyle Factors in Rosacea",
+      "description": "Trigger identification and lifestyle modifications for rosacea.",
+      "condition": "rosacea",
+      "category": "lifestyle_factors",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["triggers", "diet", "environment"]
+    },
+    {
+      "id": "hyperpigmentation_treatment_options",
+      "name": "Hyperpigmentation Treatment",
+      "description": "Treatment options for various types of hyperpigmentation.",
+      "condition": "hyperpigmentation",
+      "category": "treatment_options",
+      "priority": "high",
+      "status": "active",
+      "tags": ["cosmetic", "pharmaceutical"]
+    },
+    {
+      "id": "hyperpigmentation_prevention",
+      "name": "Hyperpigmentation Prevention",
+      "description": "Sun protection and preventive strategies for hyperpigmentation.",
+      "condition": "hyperpigmentation",
+      "category": "prevention",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["sun-protection", "prevention"]
+    },
+    {
+      "id": "melasma_treatment_options_draft",
+      "name": "Melasma Treatment Options (Draft)",
+      "description": "Treatment approaches for melasma - in development.",
+      "condition": "melasma",
+      "category": "treatment_options",
+      "priority": "low",
+      "status": "draft",
+      "tags": ["hormonal", "cosmetic"]
+    }
+  ]
+}
