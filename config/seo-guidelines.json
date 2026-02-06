@@ -1,0 +1,84 @@
+{
+  "version": "1.0.0",
+  "name": "ABA Research SEO Guidelines",
+  "description": "SEO optimization guidelines for blog and web content",
+  "appliesTo": ["blog", "newsletter", "pdf"],
+
+  "keywordDensity": {
+    "primaryKeyword": {
+      "min": 1.0,
+      "max": 2.5
+    },
+    "secondaryKeywords": {
+      "min": 0.5,
+      "max": 1.5
+    },
+    "maxConsecutiveRepetitions": 2,
+    "minKeywordSpacing": 100
+  },
+
+  "headingStructure": {
+    "requireSingleH1": true,
+    "h1ContainsKeyword": true,
+    "minH2Count": 3,
+    "maxDepth": 4,
+    "requireProperHierarchy": true,
+    "keywordInH2Percentage": 40,
+    "maxHeadingWords": 12
+  },
+
+  "contentLength": {
+    "wordCount": {
+      "min": 1200,
+      "max": 2500
+    },
+    "paragraphWords": {
+      "min": 25,
+      "max": 150
+    },
+    "sentenceWords": {
+      "min": 8,
+      "max": 25
+    },
+    "paragraphsBeforeHeading": 4
+  },
+
+  "metaContent": {
+    "titleLength": {
+      "min": 40,
+      "max": 60
+    },
+    "titleContainsKeyword": true,
+    "keywordInFirstHalf": true,
+    "descriptionLength": {
+      "min": 140,
+      "max": 160
+    },
+    "descriptionContainsKeyword": true,
+    "descriptionRequiresCTA": true
+  },
+
+  "linkMedia": {
+    "internalLinksPerThousandWords": {
+      "min": 2,
+      "max": 4
+    },
+    "externalLinksPerThousandWords": {
+      "min": 1,
+      "max": 3
+    },
+    "requireImageAltText": true,
+    "altTextContainsKeyword": false,
+    "imagesPerFiveHundredWords": 1
+  },
+
+  "readability": {
+    "fleschReadingEase": {
+      "min": 55,
+      "max": 75
+    },
+    "maxPassiveVoicePercent": 15,
+    "maxConsecutiveSameStart": 2,
+    "requireVariedSentenceLength": true
+  }
+}

@@ -25,6 +25,8 @@
 
 import type { ResearchConfig } from "../config/research/schema.js";
 import type { Topic } from "../topics/schema.js";
+import type { ContentStandards } from "../standards/content-schema.js";
+import type { SeoGuidelines } from "../standards/seo-schema.js";
 import {
   type ResearchSpecification,
   type TopicSummary,
@@ -95,6 +97,12 @@ export interface CreateSpecificationOptions {
   /** Topics to research */
   topics: Topic[];
 
+  /** Optional: content standards for generated content */
+  contentStandards?: ContentStandards;
+
+  /** Optional: SEO guidelines for generated content */
+  seoGuidelines?: SeoGuidelines;
+
   /** Optional: override start timestamp */
   startedAt?: Date;
 
@@ -143,6 +151,8 @@ export function createSpecification(
     topics: sortedTopics,
     topicSummaries: createTopicSummaries(sortedTopics),
     stats: computeStats(sortedTopics),
+    contentStandards: options.contentStandards,
+    seoGuidelines: options.seoGuidelines,
   };
 
   // Validate against schema (should always pass if inputs were valid)
