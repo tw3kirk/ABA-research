@@ -23,6 +23,8 @@
 import { z } from "zod";
 import { ResearchConfigSchema } from "../config/research/schema.js";
 import { TopicSchema } from "../topics/schema.js";
+import { ContentStandardsSchema } from "../standards/content-schema.js";
+import { SeoGuidelinesSchema } from "../standards/seo-schema.js";
 
 /**
  * Git repository state at time of run.
@@ -140,6 +142,20 @@ export const ResearchSpecificationSchema = z
         uniqueCategories: z.number().int().min(0),
       })
       .strict(),
+
+    /**
+     * Content standards (tone, citations, forbidden content, brand).
+     * Declarative constraints that govern all generated content.
+     * Optional - if not provided, no content constraints are enforced.
+     */
+    contentStandards: ContentStandardsSchema.optional(),
+
+    /**
+     * SEO guidelines (keywords, headings, readability).
+     * Declarative constraints for search engine optimization.
+     * Optional - if not provided, no SEO constraints are enforced.
+     */
+    seoGuidelines: SeoGuidelinesSchema.optional(),
   })
   .strict();
 

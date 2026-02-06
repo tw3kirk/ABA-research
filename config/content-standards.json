@@ -1,0 +1,155 @@
+{
+  "version": "1.0.0",
+  "name": "ABA Research Content Standards",
+  "description": "Content standards for skin health research content - educational, vegan-aligned, non-medical claims",
+
+  "tone": {
+    "primary": ["educational", "informative", "supportive"],
+    "secondary": ["empathetic", "professional"],
+    "avoid": ["alarmist", "dismissive", "condescending", "overly_clinical"],
+    "readingLevel": {
+      "min": 8,
+      "max": 12
+    },
+    "perspective": "second_person"
+  },
+
+  "citations": {
+    "requireInlineCitations": true,
+    "format": "numeric",
+    "requireReferencesSection": true,
+    "minReferences": 3,
+    "citationRequiredFor": [
+      "statistics",
+      "medical_claims",
+      "treatment_efficacy",
+      "study_results",
+      "prevalence_data"
+    ]
+  },
+
+  "forbidden": {
+    "exactPhrases": [
+      "guaranteed cure",
+      "100% effective",
+      "miracle cure",
+      "doctors don't want you to know",
+      "big pharma",
+      "this one simple trick"
+    ],
+    "patterns": [
+      {
+        "pattern": "\\bcures?\\b.*\\b(acne|eczema|psoriasis|rosacea)\\b",
+        "reason": "Cannot claim to cure skin conditions",
+        "severity": "error"
+      },
+      {
+        "pattern": "\\b(always|never|definitely|certainly)\\b.*\\b(works?|helps?)\\b",
+        "reason": "Avoid absolute claims about efficacy",
+        "severity": "warning"
+      }
+    ],
+    "forbiddenClaims": [
+      {
+        "category": "diagnostic_claims",
+        "description": "Content must not diagnose conditions or replace professional medical advice",
+        "examples": [
+          "If you have these symptoms, you definitely have...",
+          "You can diagnose this at home by..."
+        ]
+      },
+      {
+        "category": "treatment_guarantees",
+        "description": "Cannot guarantee treatment outcomes or cure rates",
+        "examples": [
+          "This will clear your skin in 2 weeks",
+          "Guaranteed to work for everyone"
+        ]
+      },
+      {
+        "category": "medical_advice",
+        "description": "Cannot provide specific medical advice or dosing",
+        "examples": [
+          "Take 500mg twice daily",
+          "Stop your current medication and try..."
+        ]
+      }
+    ],
+    "avoidWords": [
+      {
+        "word": "cure",
+        "reason": "Implies permanent resolution which cannot be guaranteed",
+        "alternatives": ["manage", "address", "support", "help with"]
+      },
+      {
+        "word": "treatment",
+        "reason": "May imply medical treatment; prefer softer language for non-medical content",
+        "alternatives": ["approach", "routine", "regimen", "strategy"]
+      },
+      {
+        "word": "patient",
+        "reason": "Implies medical relationship",
+        "alternatives": ["person", "individual", "someone"]
+      },
+      {
+        "word": "prescribe",
+        "reason": "Medical terminology",
+        "alternatives": ["recommend", "suggest", "consider"]
+      }
+    ]
+  },
+
+  "required": {
+    "disclaimers": [
+      {
+        "id": "medical_disclaimer",
+        "text": "This content is for informational purposes only and is not intended as medical advice. Please consult a qualified healthcare provider for personalized recommendations.",
+        "placement": "end",
+        "appliesTo": ["*"]
+      },
+      {
+        "id": "individual_results",
+        "text": "Individual results may vary. What works for one person may not work for another.",
+        "placement": "end",
+        "appliesTo": ["treatment_options", "lifestyle_factors"]
+      }
+    ],
+    "sections": [
+      {
+        "id": "key_takeaways",
+        "title": "Key Takeaways",
+        "required": true,
+        "appliesTo": ["blog", "newsletter"]
+      },
+      {
+        "id": "references",
+        "title": "References",
+        "required": true,
+        "appliesTo": ["*"]
+      }
+    ],
+    "elements": ["summary", "key_takeaways"]
+  },
+
+  "brand": {
+    "values": [
+      "science-backed",
+      "accessible",
+      "inclusive",
+      "empowering",
+      "transparent"
+    ],
+    "dietaryAlignment": ["vegan", "cruelty_free"],
+    "emphasize": [
+      "plant-based ingredients",
+      "sustainable practices",
+      "holistic skin health",
+      "evidence-based approaches"
+    ],
+    "deemphasize": [
+      "animal-derived ingredients",
+      "harsh chemical treatments",
+      "quick fixes"
+    ]
+  }
+}

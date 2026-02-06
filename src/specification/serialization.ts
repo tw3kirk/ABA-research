@@ -236,5 +236,26 @@ export function summarizeSpecification(
     lines.push(`Require peer review: ${spec.researchConfig.sourcePolicy.requirePeerReview}`);
   }
 
+  // Content standards summary
+  if (spec.contentStandards) {
+    lines.push("");
+    lines.push("--- Content Standards ---");
+    lines.push(`Name: ${spec.contentStandards.name}`);
+    lines.push(`Tone: ${spec.contentStandards.tone.primary.join(", ")}`);
+    lines.push(`Brand alignment: ${spec.contentStandards.brand.dietaryAlignment.join(", ") || "none"}`);
+    lines.push(`Forbidden phrases: ${spec.contentStandards.forbidden.exactPhrases.length}`);
+    lines.push(`Required disclaimers: ${spec.contentStandards.required.disclaimers.length}`);
+  }
+
+  // SEO guidelines summary
+  if (spec.seoGuidelines) {
+    lines.push("");
+    lines.push("--- SEO Guidelines ---");
+    lines.push(`Name: ${spec.seoGuidelines.name}`);
+    lines.push(`Word count: ${spec.seoGuidelines.contentLength.wordCount.min}-${spec.seoGuidelines.contentLength.wordCount.max}`);
+    lines.push(`Keyword density: ${spec.seoGuidelines.keywordDensity.primaryKeyword.min}-${spec.seoGuidelines.keywordDensity.primaryKeyword.max}%`);
+    lines.push(`Min H2 headings: ${spec.seoGuidelines.headingStructure.minH2Count}`);
+  }
+
   return lines.join("\n");
 }
