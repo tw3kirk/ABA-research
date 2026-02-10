@@ -4,32 +4,47 @@
  * Creates immutable research specifications that serve as the canonical
  * input contract for all pipeline stages.
  *
- * USAGE IN PIPELINE STAGES:
+ * ═══════════════════════════════════════════════════════════════════════════
+ * USAGE IN PIPELINE STAGES
+ * ═══════════════════════════════════════════════════════════════════════════
  *
  * The specification flows through the pipeline as follows:
  *
- * 1. INITIALIZATION: Created once at run start with all inputs validated
+ * 1. INITIALIZATION: Created once at run start with all inputs validated.
+ *    Topics must pass atomic validation (single entity, single claim).
  *
- * 2. RESEARCH STAGE: Uses spec.topics to determine what to research,
- *    spec.researchConfig.qualityRequirements for citation standards,
- *    spec.researchConfig.sourcePolicy for source selection
+ * 2. RESEARCH STAGE (Phase 2): Uses spec.topics to determine what to research.
+ *    Each topic has:
+ *    - primaryEntity: What to research ("turmeric", "dairy", etc.)
+ *    - entityType: How to frame it (food, herb, chemical)
+ *    - claim: Direction (helps/harms) + mechanism placeholder
  *
- * 3. CONTENT GENERATION: Uses spec.researchConfig.allowedOutputFormats
+ *    Phase 2 generators fill in claim.mechanism with evidence-backed content.
+ *
+ * 3. BATCH PROCESSING: Uses spec.topicIndexes for efficient grouping:
+ *    - byCondition: Process all acne topics together
+ *    - byCategory: Process all vegan foods together
+ *    - byEntityType: Handle foods differently from chemicals
+ *    - byClaimDirection: Frame "helps" differently from "harms"
+ *
+ * 4. CONTENT GENERATION: Uses spec.researchConfig.allowedOutputFormats
  *    to determine valid output types, spec.topics for content structure
  *
- * 4. OUTPUT STAGE: Uses spec.runMetadata.runId for file naming,
+ * 5. OUTPUT STAGE: Uses spec.runMetadata.runId for file naming,
  *    serializes full spec for audit trail
  *
- * 5. AUDIT/REPLAY: Deserializes spec from disk to reproduce exact run
+ * 6. AUDIT/REPLAY: Deserializes spec from disk to reproduce exact run
  */
 
 import type { ResearchConfig } from "../config/research/schema.js";
-import type { Topic } from "../topics/schema.js";
+import type { Topic, EntityType, ClaimDirection } from "../topics/schema.js";
 import type { ContentStandards } from "../standards/content-schema.js";
 import type { SeoGuidelines } from "../standards/seo-schema.js";
+import type { SkinCondition, ContentCategory } from "../config/research/enums.js";
 import {
   type ResearchSpecification,
   type TopicSummary,
+  type TopicIndexMaps,
   ResearchSpecificationSchema,
   SPECIFICATION_VERSION,
 } from "./schema.js";
@@ -55,12 +70,23 @@ function deepFreeze<T extends object>(obj: T): Readonly<T> {
 }
 
 /**
- * Create topic summaries for quick reference.
+ * Create topic summaries with atomic topic fields for quick reference.
+ *
+ * PHASE 2 NOTE: These summaries include the full claim structure,
+ * allowing Phase 2 generators to understand the research thesis
+ * without deserializing full topic objects.
  */
 function createTopicSummaries(topics: Topic[]): TopicSummary[] {
   return topics.map((topic) => ({
     id: topic.id,
     name: topic.name,
+    primaryEntity: topic.primaryEntity,
+    entityType: topic.entityType,
+    claim: {
+      direction: topic.claim.direction,
+      mechanism: topic.claim.mechanism,
+      confidence: topic.claim.confidence,
+    },
     condition: topic.condition,
     category: topic.category,
     priority: topic.priority,
@@ -69,18 +95,87 @@ function createTopicSummaries(topics: Topic[]): TopicSummary[] {
 }
 
 /**
- * Compute specification statistics.
+ * Create pre-computed index maps for batch processing.
+ *
+ * Indexes are stored as arrays of [key, topicIds[]] tuples for JSON serialization.
+ * Each topic is referenced by ID for deduplication and lookup.
+ *
+ * PHASE 2 NOTE: Use these indexes to batch topics efficiently:
+ * - byCondition: Process all topics for one skin condition together
+ * - byCategory: Process all topics in one content category
+ * - byEntityType: Group foods, herbs, chemicals for appropriate framing
+ * - byClaimDirection: Separate "helps" from "harms" research
+ */
+function createIndexMaps(topics: Topic[]): TopicIndexMaps {
+  // Build Maps for efficient grouping
+  const byCondition = new Map<SkinCondition, string[]>();
+  const byCategory = new Map<ContentCategory, string[]>();
+  const byEntityType = new Map<EntityType, string[]>();
+  const byClaimDirection = new Map<ClaimDirection, string[]>();
+
+  for (const topic of topics) {
+    // Index by condition
+    const conditionIds = byCondition.get(topic.condition) ?? [];
+    conditionIds.push(topic.id);
+    byCondition.set(topic.condition, conditionIds);
+
+    // Index by category
+    const categoryIds = byCategory.get(topic.category) ?? [];
+    categoryIds.push(topic.id);
+    byCategory.set(topic.category, categoryIds);
+
+    // Index by entity type
+    const entityTypeIds = byEntityType.get(topic.entityType) ?? [];
+    entityTypeIds.push(topic.id);
+    byEntityType.set(topic.entityType, entityTypeIds);
+
+    // Index by claim direction
+    const directionIds = byClaimDirection.get(topic.claim.direction) ?? [];
+    directionIds.push(topic.id);
+    byClaimDirection.set(topic.claim.direction, directionIds);
+  }
+
+  // Convert to serializable tuple arrays (sorted by key for determinism)
+  return {
+    byCondition: Array.from(byCondition.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0])
+    ),
+    byCategory: Array.from(byCategory.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0])
+    ),
+    byEntityType: Array.from(byEntityType.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0])
+    ),
+    byClaimDirection: Array.from(byClaimDirection.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0])
+    ),
+  };
+}
+
+/**
+ * Compute specification statistics including atomic topic breakdowns.
+ *
+ * PHASE 2 NOTE: Stats provide quick insight into the research scope:
+ * - helpsClaims/harmsClaims: Balance of positive vs negative research
+ * - uniqueEntityTypes: Diversity of entity types being researched
  */
 function computeStats(topics: Topic[]): ResearchSpecification["stats"] {
   const activeTopics = topics.filter((t) => t.status === "active");
   const conditions = new Set(topics.map((t) => t.condition));
   const categories = new Set(topics.map((t) => t.category));
+  const entityTypes = new Set(topics.map((t) => t.entityType));
+
+  const helpsClaims = topics.filter((t) => t.claim.direction === "helps").length;
+  const harmsClaims = topics.filter((t) => t.claim.direction === "harms").length;
 
   return {
     totalTopics: topics.length,
     activeTopics: activeTopics.length,
     uniqueConditions: conditions.size,
     uniqueCategories: categories.size,
+    uniqueEntityTypes: entityTypes.size,
+    helpsClaims,
+    harmsClaims,
   };
 }
 
@@ -143,13 +238,14 @@ export function createSpecification(
     context: options.context,
   });
 
-  // Build the specification
+  // Build the specification with pre-computed indexes
   const spec: ResearchSpecification = {
     specificationVersion: SPECIFICATION_VERSION,
     runMetadata,
     researchConfig: options.researchConfig,
     topics: sortedTopics,
     topicSummaries: createTopicSummaries(sortedTopics),
+    topicIndexes: createIndexMaps(sortedTopics),
     stats: computeStats(sortedTopics),
     contentStandards: options.contentStandards,
     seoGuidelines: options.seoGuidelines,
