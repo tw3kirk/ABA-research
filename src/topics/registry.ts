@@ -1,12 +1,19 @@
 /**
  * Topic registry with deterministic indexing.
  *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * DETERMINISTIC INDEXING FOR ATOMIC TOPICS
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
  * The TopicRegistry is the central access point for all topic data during
  * pipeline execution. It provides:
  *
- * 1. DETERMINISTIC INDEXING: Topics are indexed by condition, category, and
- *    their combination. Indexes are sorted alphabetically to ensure consistent
- *    ordering across runs, which is critical for reproducibility.
+ * 1. DETERMINISTIC INDEXING: Topics are indexed by multiple dimensions:
+ *    - Skin condition (redness, dryness, oily, acne)
+ *    - Content category (10 canonical categories)
+ *    - Entity type (food, herb, ingredient, chemical, practice, habit)
+ *    - Claim direction (helps, harms)
+ *    - Condition + Category combination
  *
  * 2. EFFICIENT LOOKUP: O(1) access to topics by various dimensions, enabling
  *    pipelines to efficiently filter and batch work.
@@ -14,22 +21,16 @@
  * 3. IMMUTABILITY: Once created, the registry cannot be modified, ensuring
  *    pipeline stages see consistent data throughout execution.
  *
- * FUTURE CONSUMPTION PATTERNS:
+ * CONSUMPTION PATTERNS:
  *
- * - Pipeline Orchestrator: Will iterate over topics by priority, dispatching
- *   research tasks. The byCondition index enables condition-focused batching.
- *
- * - Content Generator: Will use byCategory to generate category-appropriate
- *   content formats (e.g., all "treatment_options" topics get similar structure).
- *
- * - Research Aggregator: Will use byConditionAndCategory to merge related
- *   research outputs into comprehensive documents.
- *
- * - Progress Tracker: Will use the flat topics list to track completion status
- *   and estimate remaining work.
+ * - By Entity Type: Get all "herb" topics for herbal content series
+ * - By Claim Direction: Separate "helps" vs "harms" for content tone
+ * - By Condition: Group all topics for a skin condition
+ * - By Category: Generate category-specific content formats
+ * - Combined filters: Complex queries for specific content needs
  */
 
-import type { Topic, TopicPriority, TopicStatus } from "./schema.js";
+import type { Topic, TopicPriority, TopicStatus, ClaimDirection, EntityType } from "./schema.js";
 import type { SkinCondition, ContentCategory } from "../config/research/enums.js";
 
 /**
@@ -61,13 +62,25 @@ export function parseConditionCategoryKey(key: ConditionCategoryKey): {
 
 /**
  * Topic filter options for querying the registry.
+ * All filters are AND-combined (topics must match all specified criteria).
  */
 export interface TopicFilter {
+  /** Filter by skin condition */
   condition?: SkinCondition;
+  /** Filter by content category */
   category?: ContentCategory;
+  /** Filter by entity type (food, herb, ingredient, etc.) */
+  entityType?: EntityType;
+  /** Filter by claim direction (helps or harms) */
+  claimDirection?: ClaimDirection;
+  /** Filter by priority level */
   priority?: TopicPriority;
+  /** Filter by status */
   status?: TopicStatus;
+  /** Filter by any of these tags (OR within tags) */
   tags?: string[];
+  /** Filter by primary entity (partial match, case-insensitive) */
+  entityContains?: string;
 }
 
 /**
@@ -77,6 +90,8 @@ export interface RegistryStats {
   totalTopics: number;
   byStatus: Record<TopicStatus, number>;
   byPriority: Record<TopicPriority, number>;
+  byEntityType: Record<EntityType, number>;
+  byClaimDirection: Record<ClaimDirection, number>;
   uniqueConditions: number;
   uniqueCategories: number;
   uniqueCombinations: number;
@@ -84,6 +99,24 @@ export interface RegistryStats {
 
 /**
  * Immutable topic registry with deterministic indexes.
+ *
+ * @example
+ *   const registry = TopicRegistry.create(topics);
+ *
+ *   // Get all herb topics
+ *   const herbs = registry.getByEntityType("herb");
+ *
+ *   // Get all "harms" topics for acne
+ *   const harmful = registry.filter({
+ *     condition: "acne_acne_scars",
+ *     claimDirection: "harms"
+ *   });
+ *
+ *   // Get all food topics that help skin
+ *   const helpfulFoods = registry.filter({
+ *     entityType: "food",
+ *     claimDirection: "helps"
+ *   });
  */
 export class TopicRegistry {
   /**
@@ -114,6 +147,16 @@ export class TopicRegistry {
    */
   private readonly _byId: ReadonlyMap<string, Readonly<Topic>>;
 
+  /**
+   * Index: entityType -> topics (sorted by ID).
+   */
+  private readonly _byEntityType: ReadonlyMap<EntityType, ReadonlyArray<Readonly<Topic>>>;
+
+  /**
+   * Index: claim direction -> topics (sorted by ID).
+   */
+  private readonly _byClaimDirection: ReadonlyMap<ClaimDirection, ReadonlyArray<Readonly<Topic>>>;
+
   private constructor(topics: Topic[]) {
     // Sort topics by ID for deterministic ordering
     const sortedTopics = [...topics].sort((a, b) => a.id.localeCompare(b.id));
@@ -126,6 +169,8 @@ export class TopicRegistry {
     this._byCondition = this.buildConditionIndex(this._topics);
     this._byCategory = this.buildCategoryIndex(this._topics);
     this._byConditionAndCategory = this.buildConditionCategoryIndex(this._topics);
+    this._byEntityType = this.buildEntityTypeIndex(this._topics);
+    this._byClaimDirection = this.buildClaimDirectionIndex(this._topics);
   }
 
   /**
@@ -218,6 +263,48 @@ export class TopicRegistry {
     return frozenIndex;
   }
 
+  private buildEntityTypeIndex(
+    topics: ReadonlyArray<Readonly<Topic>>
+  ): ReadonlyMap<EntityType, ReadonlyArray<Readonly<Topic>>> {
+    const index = new Map<EntityType, Topic[]>();
+
+    for (const topic of topics) {
+      const entityType = topic.entityType as EntityType;
+      if (!index.has(entityType)) {
+        index.set(entityType, []);
+      }
+      index.get(entityType)!.push(topic);
+    }
+
+    // Freeze arrays and return
+    const frozenIndex = new Map<EntityType, ReadonlyArray<Readonly<Topic>>>();
+    for (const [key, value] of index) {
+      frozenIndex.set(key, Object.freeze(value));
+    }
+    return frozenIndex;
+  }
+
+  private buildClaimDirectionIndex(
+    topics: ReadonlyArray<Readonly<Topic>>
+  ): ReadonlyMap<ClaimDirection, ReadonlyArray<Readonly<Topic>>> {
+    const index = new Map<ClaimDirection, Topic[]>();
+
+    for (const topic of topics) {
+      const direction = topic.claim.direction as ClaimDirection;
+      if (!index.has(direction)) {
+        index.set(direction, []);
+      }
+      index.get(direction)!.push(topic);
+    }
+
+    // Freeze arrays and return
+    const frozenIndex = new Map<ClaimDirection, ReadonlyArray<Readonly<Topic>>>();
+    for (const [key, value] of index) {
+      frozenIndex.set(key, Object.freeze(value));
+    }
+    return frozenIndex;
+  }
+
   // ============================================================
   // Public Accessors
   // ============================================================
@@ -275,6 +362,34 @@ export class TopicRegistry {
   }
 
   /**
+   * Get all topics for an entity type (sorted by ID).
+   *
+   * @param entityType - Entity type (food, herb, ingredient, etc.)
+   * @returns Topics for that entity type, or empty array
+   *
+   * @example
+   *   const herbTopics = registry.getByEntityType("herb");
+   *   const foodTopics = registry.getByEntityType("food");
+   */
+  getByEntityType(entityType: EntityType): ReadonlyArray<Readonly<Topic>> {
+    return this._byEntityType.get(entityType) ?? [];
+  }
+
+  /**
+   * Get all topics by claim direction (sorted by ID).
+   *
+   * @param direction - Claim direction ("helps" or "harms")
+   * @returns Topics for that direction, or empty array
+   *
+   * @example
+   *   const beneficial = registry.getByClaimDirection("helps");
+   *   const harmful = registry.getByClaimDirection("harms");
+   */
+  getByClaimDirection(direction: ClaimDirection): ReadonlyArray<Readonly<Topic>> {
+    return this._byClaimDirection.get(direction) ?? [];
+  }
+
+  /**
    * Get all unique conditions that have topics.
    */
   getConditions(): ReadonlyArray<SkinCondition> {
@@ -289,6 +404,13 @@ export class TopicRegistry {
   }
 
   /**
+   * Get all unique entity types that have topics.
+   */
+  getEntityTypes(): ReadonlyArray<EntityType> {
+    return Object.freeze([...this._byEntityType.keys()].sort());
+  }
+
+  /**
    * Get all unique condition + category combinations.
    */
   getConditionCategoryKeys(): ReadonlyArray<ConditionCategoryKey> {
@@ -298,9 +420,19 @@ export class TopicRegistry {
   /**
    * Filter topics by multiple criteria.
    * Results are sorted by ID for determinism.
+   * All criteria are AND-combined (topics must match all).
    *
    * @param filter - Filter options
    * @returns Filtered topics
+   *
+   * @example
+   *   // Get all high-priority herb topics that help acne
+   *   const topics = registry.filter({
+   *     entityType: "herb",
+   *     claimDirection: "helps",
+   *     condition: "acne_acne_scars",
+   *     priority: "high"
+   *   });
    */
   filter(filter: TopicFilter): ReadonlyArray<Readonly<Topic>> {
     let results = [...this._topics];
@@ -313,6 +445,14 @@ export class TopicRegistry {
       results = results.filter((t) => t.category === filter.category);
     }
 
+    if (filter.entityType !== undefined) {
+      results = results.filter((t) => t.entityType === filter.entityType);
+    }
+
+    if (filter.claimDirection !== undefined) {
+      results = results.filter((t) => t.claim.direction === filter.claimDirection);
+    }
+
     if (filter.priority !== undefined) {
       results = results.filter((t) => t.priority === filter.priority);
     }
@@ -323,9 +463,12 @@ export class TopicRegistry {
 
     if (filter.tags !== undefined && filter.tags.length > 0) {
       const requiredTags = new Set(filter.tags);
-      results = results.filter((t) =>
-        t.tags.some((tag) => requiredTags.has(tag))
-      );
+      results = results.filter((t) => t.tags.some((tag) => requiredTags.has(tag)));
+    }
+
+    if (filter.entityContains !== undefined) {
+      const search = filter.entityContains.toLowerCase();
+      results = results.filter((t) => t.primaryEntity.toLowerCase().includes(search));
     }
 
     return Object.freeze(results);
@@ -346,16 +489,32 @@ export class TopicRegistry {
       medium: 0,
       low: 0,
     };
+    const byEntityType: Record<string, number> = {
+      food: 0,
+      herb: 0,
+      ingredient: 0,
+      chemical: 0,
+      practice: 0,
+      habit: 0,
+    };
+    const byClaimDirection: Record<string, number> = {
+      helps: 0,
+      harms: 0,
+    };
 
     for (const topic of this._topics) {
       byStatus[topic.status]++;
       byPriority[topic.priority]++;
+      byEntityType[topic.entityType]++;
+      byClaimDirection[topic.claim.direction]++;
     }
 
     return {
       totalTopics: this._topics.length,
       byStatus: byStatus as Record<TopicStatus, number>,
       byPriority: byPriority as Record<TopicPriority, number>,
+      byEntityType: byEntityType as Record<EntityType, number>,
+      byClaimDirection: byClaimDirection as Record<ClaimDirection, number>,
       uniqueConditions: this._byCondition.size,
       uniqueCategories: this._byCategory.size,
       uniqueCombinations: this._byConditionAndCategory.size,
