@@ -84,11 +84,14 @@ export {
 export {
   loadTopics,
   loadTopicsOrThrow,
+  loadTopicArray,
+  loadAndIndex,
   formatValidationReport,
   TopicValidationError,
   type TopicIssue,
   type TopicValidationResult,
   type LoadTopicsOptions,
+  type TopicIndexMaps,
 } from "./loader.js";
 
 // Atomicity validators
