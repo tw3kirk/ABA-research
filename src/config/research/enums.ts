@@ -1,44 +1,77 @@
 /**
  * Domain enumerations for research configuration.
  *
- * These enums define the fixed, supported values for the research pipeline.
- * They are intentionally restrictive to ensure consistency and prevent
- * accidental expansion of scope without explicit review.
+ * ╔═══════════════════════════════════════════════════════════════════════════╗
+ * ║  BUSINESS-CRITICAL: These enums are the canonical domain definitions.     ║
+ * ║  They are IMMUTABLE and must NOT be modified without executive approval.  ║
+ * ║                                                                           ║
+ * ║  Any change to these enums affects:                                       ║
+ * ║    - All research topic definitions                                       ║
+ * ║    - Content generation pipelines                                         ║
+ * ║    - Validation logic across the entire system                            ║
+ * ║    - Historical data compatibility                                        ║
+ * ╚═══════════════════════════════════════════════════════════════════════════╝
  */
 
 import { z } from "zod";
 
 /**
  * Supported skin conditions for research.
- * This is a controlled vocabulary - new conditions require explicit addition.
+ *
+ * CANONICAL LIST - DO NOT MODIFY WITHOUT BUSINESS APPROVAL
+ *
+ * These four conditions represent the complete scope of skin concerns
+ * addressed by this research system. Each maps to a distinct set of
+ * research topics and content strategies.
+ *
+ * @readonly
+ * @enum {string}
  */
 export const SkinCondition = z.enum([
-  "acne",
-  "eczema",
-  "psoriasis",
-  "rosacea",
-  "dermatitis",
-  "hyperpigmentation",
-  "melasma",
-  "vitiligo",
-  "seborrheic_dermatitis",
-  "keratosis_pilaris",
+  "redness_hyperpigmentation",
+  "dryness_premature_aging",
+  "oily_skin",
+  "acne_acne_scars",
 ]);
 export type SkinCondition = z.infer<typeof SkinCondition>;
 
 /**
- * Content categories for research organization.
- * Determines the lens through which research is conducted and presented.
+ * Research categories defining the lens through which content is created.
+ *
+ * CANONICAL LIST - DO NOT MODIFY WITHOUT BUSINESS APPROVAL
+ *
+ * These ten categories represent the complete taxonomy of research angles.
+ * Each category has specific content requirements and evidence standards.
+ *
+ * Categories are organized into themes:
+ *   BENEFICIAL (help skin):
+ *     - vegan_foods_that_help_skin
+ *     - ayurvedic_herbs_in_skincare_that_help_skin
+ *     - ayurvedic_herbs_to_eat_that_benefit_skin
+ *     - ayurvedic_practices_that_help_skin
+ *     - other_practices_that_help_skin
+ *
+ *   HARMFUL (harm skin):
+ *     - animal_ingredients_in_food_that_harm_skin
+ *     - animal_ingredients_in_skincare_that_harm_skin
+ *     - other_foods_that_harm_skin
+ *     - skincare_chemicals_that_harm_skin
+ *     - habits_that_harm_skin
+ *
+ * @readonly
+ * @enum {string}
  */
 export const ContentCategory = z.enum([
-  "pathophysiology",
-  "treatment_options",
-  "lifestyle_factors",
-  "prevention",
-  "diagnosis",
-  "prognosis",
-  "epidemiology",
-  "patient_education",
+  "vegan_foods_that_help_skin",
+  "ayurvedic_herbs_in_skincare_that_help_skin",
+  "animal_ingredients_in_food_that_harm_skin",
+  "animal_ingredients_in_skincare_that_harm_skin",
+  "other_foods_that_harm_skin",
+  "skincare_chemicals_that_harm_skin",
+  "ayurvedic_practices_that_help_skin",
+  "other_practices_that_help_skin",
+  "habits_that_harm_skin",
+  "ayurvedic_herbs_to_eat_that_benefit_skin",
 ]);
 export type ContentCategory = z.infer<typeof ContentCategory>;
 

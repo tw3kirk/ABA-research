@@ -1,135 +1,229 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "topics": [
     {
-      "id": "acne_treatment_options",
-      "name": "Acne Treatment Options",
-      "description": "Comprehensive overview of acne treatment approaches including topical, oral, and procedural options.",
-      "condition": "acne",
-      "category": "treatment_options",
+      "id": "turmeric_helps_redness",
+      "primaryEntity": "turmeric",
+      "entityType": "herb",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "contains curcumin which inhibits inflammatory cytokines",
+        "confidence": "established"
+      },
+      "name": "Turmeric Reduces Skin Redness",
+      "description": "Turmeric's active compound curcumin has been shown to reduce inflammatory markers associated with skin redness and hyperpigmentation.",
+      "condition": "redness_hyperpigmentation",
+      "category": "ayurvedic_herbs_in_skincare_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["common", "pharmaceutical", "otc"]
+      "tags": ["anti-inflammatory", "curcumin"]
     },
     {
-      "id": "acne_pathophysiology",
-      "name": "Acne Pathophysiology",
-      "description": "Understanding the biological mechanisms underlying acne development.",
-      "condition": "acne",
-      "category": "pathophysiology",
-      "priority": "medium",
-      "status": "active",
-      "tags": ["science", "mechanisms"]
-    },
-    {
-      "id": "acne_lifestyle_factors",
-      "name": "Lifestyle Factors in Acne",
-      "description": "Diet, stress, sleep, and other lifestyle factors affecting acne.",
-      "condition": "acne",
-      "category": "lifestyle_factors",
-      "priority": "medium",
-      "status": "active",
-      "tags": ["diet", "stress", "holistic"]
-    },
-    {
-      "id": "eczema_treatment_options",
-      "name": "Eczema Treatment Options",
-      "description": "Treatment approaches for eczema including moisturizers, topical steroids, and biologics.",
-      "condition": "eczema",
-      "category": "treatment_options",
+      "id": "avocado_helps_dryness",
+      "primaryEntity": "avocado",
+      "entityType": "food",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "provides monounsaturated fatty acids that support skin barrier function",
+        "confidence": "established"
+      },
+      "name": "Avocado Improves Dry Skin",
+      "description": "Avocado consumption provides healthy fats and vitamin E that support skin hydration from within.",
+      "condition": "dryness_premature_aging",
+      "category": "vegan_foods_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["common", "pharmaceutical", "biologics"]
+      "tags": ["healthy-fats", "vitamin-e"]
     },
     {
-      "id": "eczema_prevention",
-      "name": "Eczema Prevention Strategies",
-      "description": "Preventive measures and trigger avoidance for eczema management.",
-      "condition": "eczema",
-      "category": "prevention",
-      "priority": "medium",
-      "status": "active",
-      "tags": ["triggers", "prevention"]
-    },
-    {
-      "id": "eczema_patient_education",
-      "name": "Eczema Patient Education",
-      "description": "Educational content for patients and caregivers about eczema management.",
-      "condition": "eczema",
-      "category": "patient_education",
+      "id": "neem_helps_acne",
+      "primaryEntity": "neem",
+      "entityType": "herb",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "exhibits antibacterial properties against P. acnes bacteria",
+        "confidence": "established"
+      },
+      "name": "Neem Reduces Acne Breakouts",
+      "description": "Neem leaf extract applied topically demonstrates antibacterial activity that helps reduce acne-causing bacteria.",
+      "condition": "acne_acne_scars",
+      "category": "ayurvedic_herbs_in_skincare_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["education", "self-care"]
+      "tags": ["antibacterial", "topical"]
     },
     {
-      "id": "psoriasis_treatment_options",
-      "name": "Psoriasis Treatment Options",
-      "description": "Treatment landscape for psoriasis including topicals, phototherapy, and systemics.",
-      "condition": "psoriasis",
-      "category": "treatment_options",
+      "id": "dairy_harms_acne",
+      "primaryEntity": "dairy",
+      "entityType": "food",
+      "claim": {
+        "direction": "harms",
+        "mechanism": "contains hormones and growth factors that stimulate sebum production",
+        "confidence": "emerging"
+      },
+      "name": "Dairy Worsens Acne",
+      "description": "Dairy consumption has been associated with increased acne severity due to its hormone content affecting sebaceous gland activity.",
+      "condition": "acne_acne_scars",
+      "category": "animal_ingredients_in_food_that_harm_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["common", "biologics", "phototherapy"]
+      "tags": ["hormonal", "sebum"]
     },
     {
-      "id": "psoriasis_pathophysiology",
-      "name": "Psoriasis Pathophysiology",
-      "description": "Immune mechanisms and genetic factors in psoriasis.",
-      "condition": "psoriasis",
-      "category": "pathophysiology",
+      "id": "lanolin_harms_acne",
+      "primaryEntity": "lanolin",
+      "entityType": "ingredient",
+      "claim": {
+        "direction": "harms",
+        "mechanism": "is comedogenic and can clog pores leading to breakouts",
+        "confidence": "established"
+      },
+      "name": "Lanolin Clogs Pores",
+      "description": "Lanolin, derived from sheep wool, has a high comedogenic rating and can trigger acne in susceptible individuals.",
+      "condition": "acne_acne_scars",
+      "category": "animal_ingredients_in_skincare_that_harm_skin",
       "priority": "medium",
       "status": "active",
-      "tags": ["science", "immunology", "genetics"]
+      "tags": ["comedogenic", "wool-derived"]
     },
     {
-      "id": "rosacea_treatment_options",
-      "name": "Rosacea Treatment Options",
-      "description": "Management approaches for different rosacea subtypes.",
-      "condition": "rosacea",
-      "category": "treatment_options",
+      "id": "sulfates_harms_dryness",
+      "primaryEntity": "sodium lauryl sulfate",
+      "entityType": "chemical",
+      "claim": {
+        "direction": "harms",
+        "mechanism": "strips natural oils and disrupts the skin barrier",
+        "confidence": "established"
+      },
+      "name": "SLS Damages Dry Skin",
+      "description": "Sodium lauryl sulfate is a harsh surfactant that removes protective oils from skin, exacerbating dryness.",
+      "condition": "dryness_premature_aging",
+      "category": "skincare_chemicals_that_harm_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["subtypes", "pharmaceutical"]
+      "tags": ["surfactant", "barrier-damage"]
     },
     {
-      "id": "rosacea_lifestyle_factors",
-      "name": "Lifestyle Factors in Rosacea",
-      "description": "Trigger identification and lifestyle modifications for rosacea.",
-      "condition": "rosacea",
-      "category": "lifestyle_factors",
-      "priority": "medium",
-      "status": "active",
-      "tags": ["triggers", "diet", "environment"]
-    },
-    {
-      "id": "hyperpigmentation_treatment_options",
-      "name": "Hyperpigmentation Treatment",
-      "description": "Treatment options for various types of hyperpigmentation.",
-      "condition": "hyperpigmentation",
-      "category": "treatment_options",
+      "id": "abhyanga_helps_dryness",
+      "primaryEntity": "abhyanga",
+      "entityType": "practice",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "delivers oils deep into skin through massage improving hydration",
+        "confidence": "established"
+      },
+      "name": "Abhyanga Oil Massage Hydrates Skin",
+      "description": "The Ayurvedic practice of abhyanga (self-massage with warm oil) deeply nourishes and hydrates dry skin.",
+      "condition": "dryness_premature_aging",
+      "category": "ayurvedic_practices_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["cosmetic", "pharmaceutical"]
+      "tags": ["massage", "oil-therapy"]
     },
     {
-      "id": "hyperpigmentation_prevention",
-      "name": "Hyperpigmentation Prevention",
-      "description": "Sun protection and preventive strategies for hyperpigmentation.",
-      "condition": "hyperpigmentation",
-      "category": "prevention",
+      "id": "triphala_helps_oily",
+      "primaryEntity": "triphala",
+      "entityType": "herb",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "has astringent properties that help regulate sebum when consumed",
+        "confidence": "emerging"
+      },
+      "name": "Triphala Balances Oily Skin",
+      "description": "Consuming triphala internally supports digestive health and has traditional use for balancing skin oiliness.",
+      "condition": "oily_skin",
+      "category": "ayurvedic_herbs_to_eat_that_benefit_skin",
       "priority": "medium",
       "status": "active",
-      "tags": ["sun-protection", "prevention"]
+      "tags": ["digestive", "astringent"]
     },
     {
-      "id": "melasma_treatment_options_draft",
-      "name": "Melasma Treatment Options (Draft)",
-      "description": "Treatment approaches for melasma - in development.",
-      "condition": "melasma",
-      "category": "treatment_options",
-      "priority": "low",
-      "status": "draft",
-      "tags": ["hormonal", "cosmetic"]
+      "id": "face_touching_harms_acne",
+      "primaryEntity": "face touching",
+      "entityType": "habit",
+      "claim": {
+        "direction": "harms",
+        "mechanism": "transfers bacteria and oils from hands to facial skin",
+        "confidence": "established"
+      },
+      "name": "Face Touching Causes Breakouts",
+      "description": "The habit of frequently touching the face transfers acne-causing bacteria and excess oils to the skin.",
+      "condition": "acne_acne_scars",
+      "category": "habits_that_harm_skin",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["hygiene", "bacteria"]
+    },
+    {
+      "id": "refined_sugar_harms_acne",
+      "primaryEntity": "refined sugar",
+      "entityType": "food",
+      "claim": {
+        "direction": "harms",
+        "mechanism": "spikes blood glucose triggering insulin and IGF-1 which increase sebum",
+        "confidence": "established"
+      },
+      "name": "Refined Sugar Triggers Acne",
+      "description": "High glycemic foods like refined sugar cause blood sugar spikes that promote acne through hormonal pathways.",
+      "condition": "acne_acne_scars",
+      "category": "other_foods_that_harm_skin",
+      "priority": "high",
+      "status": "active",
+      "tags": ["glycemic", "hormonal"]
+    },
+    {
+      "id": "gua_sha_helps_redness",
+      "primaryEntity": "gua sha",
+      "entityType": "practice",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "promotes lymphatic drainage reducing puffiness and evening skin tone",
+        "confidence": "emerging"
+      },
+      "name": "Gua Sha Reduces Facial Redness",
+      "description": "Regular gua sha practice improves circulation and lymphatic flow, helping to reduce facial redness over time.",
+      "condition": "redness_hyperpigmentation",
+      "category": "other_practices_that_help_skin",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["lymphatic", "circulation"]
+    },
+    {
+      "id": "kale_helps_redness",
+      "primaryEntity": "kale",
+      "entityType": "food",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "provides vitamin K and antioxidants that reduce vascular inflammation",
+        "confidence": "emerging"
+      },
+      "name": "Kale Calms Skin Redness",
+      "description": "Kale's high vitamin K and antioxidant content supports healthy capillaries and reduces inflammatory redness.",
+      "condition": "redness_hyperpigmentation",
+      "category": "vegan_foods_that_help_skin",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["vitamin-k", "antioxidant"]
+    }
+  ],
+  "invalidExamples": [
+    {
+      "example": {
+        "id": "ayurvedic_herbs_for_acne",
+        "primaryEntity": "Ayurvedic herbs",
+        "entityType": "herb",
+        "claim": {
+          "direction": "helps",
+          "mechanism": "various herbs reduce inflammation and kill bacteria"
+        },
+        "name": "Ayurvedic Herbs for Acne Treatment",
+        "description": "Traditional Ayurvedic herbs like neem, turmeric, and tulsi that help with acne.",
+        "condition": "acne_acne_scars",
+        "category": "ayurvedic_herbs_in_skincare_that_help_skin",
+        "priority": "high",
+        "status": "active"
+      },
+      "invalidReason": "FAILS ATOMICITY: (1) primaryEntity 'Ayurvedic herbs' is a bucket category, not a single entity — should be split into separate topics for 'neem', 'turmeric', 'tulsi'. (2) Name contains 'herbs' plural indicating multiple items. (3) Description lists multiple entities with 'like neem, turmeric, and tulsi'. (4) Mechanism mentions 'various herbs' which is vague. Each herb should be its own topic with its own specific mechanism."
     }
   ]
 }
