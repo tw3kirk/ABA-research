@@ -2,134 +2,134 @@
   "version": "1.0.0",
   "topics": [
     {
-      "id": "acne_treatment_options",
-      "name": "Acne Treatment Options",
-      "description": "Comprehensive overview of acne treatment approaches including topical, oral, and procedural options.",
-      "condition": "acne",
-      "category": "treatment_options",
+      "id": "redness_vegan_foods",
+      "name": "Vegan Foods for Redness & Hyperpigmentation",
+      "description": "Plant-based foods that help reduce skin redness and even out hyperpigmentation.",
+      "condition": "redness_hyperpigmentation",
+      "category": "vegan_foods_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["common", "pharmaceutical", "otc"]
+      "tags": ["nutrition", "plant-based", "anti-inflammatory"]
     },
     {
-      "id": "acne_pathophysiology",
-      "name": "Acne Pathophysiology",
-      "description": "Understanding the biological mechanisms underlying acne development.",
-      "condition": "acne",
-      "category": "pathophysiology",
-      "priority": "medium",
-      "status": "active",
-      "tags": ["science", "mechanisms"]
-    },
-    {
-      "id": "acne_lifestyle_factors",
-      "name": "Lifestyle Factors in Acne",
-      "description": "Diet, stress, sleep, and other lifestyle factors affecting acne.",
-      "condition": "acne",
-      "category": "lifestyle_factors",
-      "priority": "medium",
-      "status": "active",
-      "tags": ["diet", "stress", "holistic"]
-    },
-    {
-      "id": "eczema_treatment_options",
-      "name": "Eczema Treatment Options",
-      "description": "Treatment approaches for eczema including moisturizers, topical steroids, and biologics.",
-      "condition": "eczema",
-      "category": "treatment_options",
+      "id": "redness_ayurvedic_skincare",
+      "name": "Ayurvedic Herbs for Redness in Skincare",
+      "description": "Traditional Ayurvedic herbs used topically to calm redness and reduce hyperpigmentation.",
+      "condition": "redness_hyperpigmentation",
+      "category": "ayurvedic_herbs_in_skincare_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["common", "pharmaceutical", "biologics"]
+      "tags": ["ayurveda", "topical", "traditional"]
     },
     {
-      "id": "eczema_prevention",
-      "name": "Eczema Prevention Strategies",
-      "description": "Preventive measures and trigger avoidance for eczema management.",
-      "condition": "eczema",
-      "category": "prevention",
+      "id": "redness_animal_food_harm",
+      "name": "Animal Foods That Worsen Redness",
+      "description": "Animal-derived food ingredients that may trigger or exacerbate skin redness.",
+      "condition": "redness_hyperpigmentation",
+      "category": "animal_ingredients_in_food_that_harm_skin",
       "priority": "medium",
       "status": "active",
-      "tags": ["triggers", "prevention"]
+      "tags": ["diet", "triggers", "inflammation"]
     },
     {
-      "id": "eczema_patient_education",
-      "name": "Eczema Patient Education",
-      "description": "Educational content for patients and caregivers about eczema management.",
-      "condition": "eczema",
-      "category": "patient_education",
+      "id": "dryness_vegan_foods",
+      "name": "Vegan Foods for Dry & Aging Skin",
+      "description": "Plant-based foods rich in nutrients that combat dryness and premature aging.",
+      "condition": "dryness_premature_aging",
+      "category": "vegan_foods_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["education", "self-care"]
+      "tags": ["nutrition", "hydration", "antioxidants"]
     },
     {
-      "id": "psoriasis_treatment_options",
-      "name": "Psoriasis Treatment Options",
-      "description": "Treatment landscape for psoriasis including topicals, phototherapy, and systemics.",
-      "condition": "psoriasis",
-      "category": "treatment_options",
+      "id": "dryness_ayurvedic_practices",
+      "name": "Ayurvedic Practices for Dry Skin",
+      "description": "Traditional Ayurvedic practices like abhyanga and dietary routines for skin hydration.",
+      "condition": "dryness_premature_aging",
+      "category": "ayurvedic_practices_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["common", "biologics", "phototherapy"]
+      "tags": ["ayurveda", "lifestyle", "hydration"]
     },
     {
-      "id": "psoriasis_pathophysiology",
-      "name": "Psoriasis Pathophysiology",
-      "description": "Immune mechanisms and genetic factors in psoriasis.",
-      "condition": "psoriasis",
-      "category": "pathophysiology",
+      "id": "dryness_chemicals_harm",
+      "name": "Skincare Chemicals That Worsen Dryness",
+      "description": "Synthetic skincare ingredients that strip moisture and accelerate skin aging.",
+      "condition": "dryness_premature_aging",
+      "category": "skincare_chemicals_that_harm_skin",
       "priority": "medium",
       "status": "active",
-      "tags": ["science", "immunology", "genetics"]
+      "tags": ["ingredients", "avoid", "barrier-damage"]
     },
     {
-      "id": "rosacea_treatment_options",
-      "name": "Rosacea Treatment Options",
-      "description": "Management approaches for different rosacea subtypes.",
-      "condition": "rosacea",
-      "category": "treatment_options",
+      "id": "oily_ayurvedic_herbs_eat",
+      "name": "Ayurvedic Herbs to Eat for Oily Skin",
+      "description": "Internal Ayurvedic herbs that help balance sebum production when consumed.",
+      "condition": "oily_skin",
+      "category": "ayurvedic_herbs_to_eat_that_benefit_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["subtypes", "pharmaceutical"]
+      "tags": ["ayurveda", "internal", "balance"]
     },
     {
-      "id": "rosacea_lifestyle_factors",
-      "name": "Lifestyle Factors in Rosacea",
-      "description": "Trigger identification and lifestyle modifications for rosacea.",
-      "condition": "rosacea",
-      "category": "lifestyle_factors",
+      "id": "oily_other_practices",
+      "name": "Practices That Help Oily Skin",
+      "description": "Non-Ayurvedic practices and routines that help manage excess oil production.",
+      "condition": "oily_skin",
+      "category": "other_practices_that_help_skin",
       "priority": "medium",
       "status": "active",
-      "tags": ["triggers", "diet", "environment"]
+      "tags": ["lifestyle", "routine", "sebum-control"]
     },
     {
-      "id": "hyperpigmentation_treatment_options",
-      "name": "Hyperpigmentation Treatment",
-      "description": "Treatment options for various types of hyperpigmentation.",
-      "condition": "hyperpigmentation",
-      "category": "treatment_options",
+      "id": "oily_habits_harm",
+      "name": "Habits That Worsen Oily Skin",
+      "description": "Daily habits and behaviors that increase sebum production and skin oiliness.",
+      "condition": "oily_skin",
+      "category": "habits_that_harm_skin",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["habits", "avoid", "triggers"]
+    },
+    {
+      "id": "acne_vegan_foods",
+      "name": "Vegan Foods for Acne & Scarring",
+      "description": "Plant-based foods that help reduce acne breakouts and support scar healing.",
+      "condition": "acne_acne_scars",
+      "category": "vegan_foods_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["cosmetic", "pharmaceutical"]
+      "tags": ["nutrition", "anti-inflammatory", "healing"]
     },
     {
-      "id": "hyperpigmentation_prevention",
-      "name": "Hyperpigmentation Prevention",
-      "description": "Sun protection and preventive strategies for hyperpigmentation.",
-      "condition": "hyperpigmentation",
-      "category": "prevention",
+      "id": "acne_animal_skincare_harm",
+      "name": "Animal Skincare Ingredients That Worsen Acne",
+      "description": "Animal-derived skincare ingredients that may clog pores and trigger breakouts.",
+      "condition": "acne_acne_scars",
+      "category": "animal_ingredients_in_skincare_that_harm_skin",
+      "priority": "high",
+      "status": "active",
+      "tags": ["ingredients", "comedogenic", "avoid"]
+    },
+    {
+      "id": "acne_other_foods_harm",
+      "name": "Foods That Trigger Acne",
+      "description": "Non-animal foods that may contribute to acne breakouts and inflammation.",
+      "condition": "acne_acne_scars",
+      "category": "other_foods_that_harm_skin",
       "priority": "medium",
       "status": "active",
-      "tags": ["sun-protection", "prevention"]
+      "tags": ["diet", "triggers", "glycemic"]
     },
     {
-      "id": "melasma_treatment_options_draft",
-      "name": "Melasma Treatment Options (Draft)",
-      "description": "Treatment approaches for melasma - in development.",
-      "condition": "melasma",
-      "category": "treatment_options",
-      "priority": "low",
-      "status": "draft",
-      "tags": ["hormonal", "cosmetic"]
+      "id": "acne_ayurvedic_skincare",
+      "name": "Ayurvedic Herbs for Acne Skincare",
+      "description": "Traditional Ayurvedic herbs used topically to treat acne and reduce scarring.",
+      "condition": "acne_acne_scars",
+      "category": "ayurvedic_herbs_in_skincare_that_help_skin",
+      "priority": "high",
+      "status": "active",
+      "tags": ["ayurveda", "topical", "antibacterial"]
     }
   ]
 }

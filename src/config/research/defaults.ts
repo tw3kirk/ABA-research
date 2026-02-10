@@ -17,30 +17,32 @@ import type { ResearchConfig } from "./schema.js";
 /**
  * Default research configuration.
  * Suitable for general skin health research with high quality standards.
+ *
+ * NOTE: supportedConditions and supportedCategories use the canonical
+ * domain enums defined in enums.ts. These are business-critical and
+ * must not be modified without approval.
  */
 export const DEFAULT_RESEARCH_CONFIG: ResearchConfig = {
-  // All supported skin conditions enabled by default
+  // All 4 canonical skin conditions enabled by default
   supportedConditions: [
-    "acne",
-    "eczema",
-    "psoriasis",
-    "rosacea",
-    "dermatitis",
-    "hyperpigmentation",
-    "melasma",
-    "vitiligo",
-    "seborrheic_dermatitis",
-    "keratosis_pilaris",
+    "redness_hyperpigmentation",
+    "dryness_premature_aging",
+    "oily_skin",
+    "acne_acne_scars",
   ],
 
-  // Core content categories
+  // All 10 canonical content categories enabled by default
   supportedCategories: [
-    "pathophysiology",
-    "treatment_options",
-    "lifestyle_factors",
-    "prevention",
-    "diagnosis",
-    "patient_education",
+    "vegan_foods_that_help_skin",
+    "ayurvedic_herbs_in_skincare_that_help_skin",
+    "animal_ingredients_in_food_that_harm_skin",
+    "animal_ingredients_in_skincare_that_harm_skin",
+    "other_foods_that_harm_skin",
+    "skincare_chemicals_that_harm_skin",
+    "ayurvedic_practices_that_help_skin",
+    "other_practices_that_help_skin",
+    "habits_that_harm_skin",
+    "ayurvedic_herbs_to_eat_that_benefit_skin",
   ],
 
   // Standard output formats
