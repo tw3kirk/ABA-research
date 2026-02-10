@@ -5,11 +5,13 @@
  * combining configuration, topics, and run metadata into a single immutable
  * object that flows through all pipeline stages.
  *
- * ARCHITECTURE ROLE:
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ARCHITECTURE ROLE
+ * ═══════════════════════════════════════════════════════════════════════════
  *
  * ```
  * ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
- * │  ResearchConfig │     │     Topics      │     │   Run Metadata  │
+ * │  ResearchConfig │     │  Atomic Topics  │     │   Run Metadata  │
  * │  (how to run)   │     │  (what to run)  │     │  (when/where)   │
  * └────────┬────────┘     └────────┬────────┘     └────────┬────────┘
  *          │                       │                       │
@@ -19,23 +21,26 @@
  *                    ┌─────────────────────────┐
  *                    │  ResearchSpecification  │
  *                    │  (immutable contract)   │
+ *                    │  + topicIndexes         │
  *                    └────────────┬────────────┘
  *                                 │
  *          ┌──────────────────────┼──────────────────────┐
  *          │                      │                      │
  *          ▼                      ▼                      ▼
  *   ┌─────────────┐      ┌─────────────┐       ┌─────────────┐
- *   │  Research   │      │   Content   │       │   Output    │
- *   │   Stage     │      │   Stage     │       │   Stage     │
+ *   │  Phase 2    │      │   Content   │       │   Output    │
+ *   │  Research   │      │   Stage     │       │   Stage     │
  *   └─────────────┘      └─────────────┘       └─────────────┘
  * ```
  *
- * USAGE EXAMPLE:
+ * ═══════════════════════════════════════════════════════════════════════════
+ * PHASE 2 USAGE — Research Generation
+ * ═══════════════════════════════════════════════════════════════════════════
  *
  * ```typescript
  * import { createSpecification, saveSpecification } from "./specification/index.js";
  * import { loadResearchConfig, DEFAULT_RESEARCH_CONFIG } from "./config/index.js";
- * import { loadTopicsOrThrow, TopicRegistry } from "./topics/index.js";
+ * import { loadTopicsOrThrow } from "./topics/index.js";
  * import { initRunId } from "./logging/index.js";
  *
  * // Initialize
@@ -54,13 +59,32 @@
  * // Save for audit
  * saveSpecification(spec, "output/specifications");
  *
- * // Use in pipeline
+ * // PHASE 2: Research each atomic topic
  * for (const topic of spec.topics) {
- *   // Research each topic according to spec.researchConfig
+ *   // topic.primaryEntity: What to research ("turmeric", "dairy")
+ *   // topic.entityType: How to frame it (food, herb, chemical)
+ *   // topic.claim.direction: The thesis (helps or harms)
+ *   // topic.claim.mechanism: Fill this with evidence-backed content
+ * }
+ *
+ * // PHASE 2: Batch by condition for efficient processing
+ * for (const [condition, topicIds] of spec.topicIndexes.byCondition) {
+ *   // Process all topics for this skin condition together
+ *   const conditionTopics = topicIds.map(id =>
+ *     spec.topics.find(t => t.id === id)!
+ *   );
+ * }
+ *
+ * // PHASE 2: Separate helps from harms for appropriate framing
+ * for (const [direction, topicIds] of spec.topicIndexes.byClaimDirection) {
+ *   // "helps" topics need positive framing
+ *   // "harms" topics need warning framing
  * }
  * ```
  *
- * IMMUTABILITY GUARANTEE:
+ * ═══════════════════════════════════════════════════════════════════════════
+ * IMMUTABILITY GUARANTEE
+ * ═══════════════════════════════════════════════════════════════════════════
  *
  * The specification is deeply frozen after creation. Any attempt to modify
  * it will throw a TypeError at runtime. This ensures:
@@ -76,11 +100,13 @@ export {
   GitStateSchema,
   RunMetadataSchema,
   TopicSummarySchema,
+  TopicIndexMapsSchema,
   SPECIFICATION_VERSION,
   type ResearchSpecification,
   type GitState,
   type RunMetadata,
   type TopicSummary,
+  type TopicIndexMaps,
 } from "./schema.js";
 
 // Metadata capture

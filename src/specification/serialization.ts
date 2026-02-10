@@ -17,6 +17,20 @@
  * 4. VERSIONING: The specificationVersion field allows loaders to detect
  *    old formats and apply migrations if schema has evolved.
  *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * PHASE 2 SERIALIZATION
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * The serialized specification includes:
+ * - Full atomic topics with primaryEntity, entityType, and claim
+ * - Pre-computed topicIndexes for batch processing
+ * - Stats including helps/harms claim breakdown
+ *
+ * Phase 2 generators deserialize this and use:
+ * - topics array for iteration
+ * - topicIndexes for batch grouping
+ * - claim.mechanism placeholders to fill with evidence
+ *
  * FILE NAMING CONVENTION:
  * Specifications are saved as: specification-{runId}.json
  * This allows easy correlation with log files and outputs.
@@ -175,6 +189,8 @@ export interface SummaryOptions {
   includeTopics?: boolean;
   /** Include full config (default: false for brevity) */
   includeConfig?: boolean;
+  /** Include index map details (default: false for brevity) */
+  includeIndexes?: boolean;
 }
 
 /**
@@ -219,12 +235,37 @@ export function summarizeSpecification(
   lines.push(`Active topics: ${spec.stats.activeTopics}`);
   lines.push(`Unique conditions: ${spec.stats.uniqueConditions}`);
   lines.push(`Unique categories: ${spec.stats.uniqueCategories}`);
+  lines.push(`Unique entity types: ${spec.stats.uniqueEntityTypes}`);
+  lines.push(`Helps claims: ${spec.stats.helpsClaims}`);
+  lines.push(`Harms claims: ${spec.stats.harmsClaims}`);
+
+  if (options.includeIndexes) {
+    lines.push("");
+    lines.push("--- Topic Indexes ---");
+    lines.push("By Condition:");
+    for (const [condition, ids] of spec.topicIndexes.byCondition) {
+      lines.push(`  ${condition}: ${ids.length} topics`);
+    }
+    lines.push("By Entity Type:");
+    for (const [type, ids] of spec.topicIndexes.byEntityType) {
+      lines.push(`  ${type}: ${ids.length} topics`);
+    }
+    lines.push("By Claim Direction:");
+    for (const [direction, ids] of spec.topicIndexes.byClaimDirection) {
+      lines.push(`  ${direction}: ${ids.length} topics`);
+    }
+  }
 
   if (options.includeTopics) {
     lines.push("");
-    lines.push("--- Topics ---");
+    lines.push("--- Topics (Atomic) ---");
     for (const topic of spec.topicSummaries) {
-      lines.push(`  - ${topic.id}: ${topic.condition}/${topic.category} [${topic.priority}]`);
+      const direction = topic.claim.direction;
+      const confidence = topic.claim.confidence;
+      lines.push(`  - ${topic.id}:`);
+      lines.push(`      Entity: ${topic.primaryEntity} (${topic.entityType})`);
+      lines.push(`      Claim: ${direction} [${confidence}]`);
+      lines.push(`      Target: ${topic.condition}/${topic.category}`);
     }
   }
 
