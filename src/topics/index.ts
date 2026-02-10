@@ -51,8 +51,12 @@ export {
   TopicCollectionSchema,
   TopicPriority,
   TopicStatus,
+  ClaimDirection,
+  EntityType,
+  ClaimSchema,
   type Topic,
   type TopicCollection,
+  type Claim,
 } from "./schema.js";
 
 // Loader and validation

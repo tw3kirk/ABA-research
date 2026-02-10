@@ -1,135 +1,229 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "topics": [
     {
-      "id": "redness_vegan_foods",
-      "name": "Vegan Foods for Redness & Hyperpigmentation",
-      "description": "Plant-based foods that help reduce skin redness and even out hyperpigmentation.",
-      "condition": "redness_hyperpigmentation",
-      "category": "vegan_foods_that_help_skin",
-      "priority": "high",
-      "status": "active",
-      "tags": ["nutrition", "plant-based", "anti-inflammatory"]
-    },
-    {
-      "id": "redness_ayurvedic_skincare",
-      "name": "Ayurvedic Herbs for Redness in Skincare",
-      "description": "Traditional Ayurvedic herbs used topically to calm redness and reduce hyperpigmentation.",
+      "id": "turmeric_helps_redness",
+      "primaryEntity": "turmeric",
+      "entityType": "herb",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "contains curcumin which inhibits inflammatory cytokines",
+        "confidence": "established"
+      },
+      "name": "Turmeric Reduces Skin Redness",
+      "description": "Turmeric's active compound curcumin has been shown to reduce inflammatory markers associated with skin redness and hyperpigmentation.",
       "condition": "redness_hyperpigmentation",
       "category": "ayurvedic_herbs_in_skincare_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["ayurveda", "topical", "traditional"]
+      "tags": ["anti-inflammatory", "curcumin"]
     },
     {
-      "id": "redness_animal_food_harm",
-      "name": "Animal Foods That Worsen Redness",
-      "description": "Animal-derived food ingredients that may trigger or exacerbate skin redness.",
-      "condition": "redness_hyperpigmentation",
-      "category": "animal_ingredients_in_food_that_harm_skin",
-      "priority": "medium",
-      "status": "active",
-      "tags": ["diet", "triggers", "inflammation"]
-    },
-    {
-      "id": "dryness_vegan_foods",
-      "name": "Vegan Foods for Dry & Aging Skin",
-      "description": "Plant-based foods rich in nutrients that combat dryness and premature aging.",
+      "id": "avocado_helps_dryness",
+      "primaryEntity": "avocado",
+      "entityType": "food",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "provides monounsaturated fatty acids that support skin barrier function",
+        "confidence": "established"
+      },
+      "name": "Avocado Improves Dry Skin",
+      "description": "Avocado consumption provides healthy fats and vitamin E that support skin hydration from within.",
       "condition": "dryness_premature_aging",
       "category": "vegan_foods_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["nutrition", "hydration", "antioxidants"]
+      "tags": ["healthy-fats", "vitamin-e"]
     },
     {
-      "id": "dryness_ayurvedic_practices",
-      "name": "Ayurvedic Practices for Dry Skin",
-      "description": "Traditional Ayurvedic practices like abhyanga and dietary routines for skin hydration.",
+      "id": "neem_helps_acne",
+      "primaryEntity": "neem",
+      "entityType": "herb",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "exhibits antibacterial properties against P. acnes bacteria",
+        "confidence": "established"
+      },
+      "name": "Neem Reduces Acne Breakouts",
+      "description": "Neem leaf extract applied topically demonstrates antibacterial activity that helps reduce acne-causing bacteria.",
+      "condition": "acne_acne_scars",
+      "category": "ayurvedic_herbs_in_skincare_that_help_skin",
+      "priority": "high",
+      "status": "active",
+      "tags": ["antibacterial", "topical"]
+    },
+    {
+      "id": "dairy_harms_acne",
+      "primaryEntity": "dairy",
+      "entityType": "food",
+      "claim": {
+        "direction": "harms",
+        "mechanism": "contains hormones and growth factors that stimulate sebum production",
+        "confidence": "emerging"
+      },
+      "name": "Dairy Worsens Acne",
+      "description": "Dairy consumption has been associated with increased acne severity due to its hormone content affecting sebaceous gland activity.",
+      "condition": "acne_acne_scars",
+      "category": "animal_ingredients_in_food_that_harm_skin",
+      "priority": "high",
+      "status": "active",
+      "tags": ["hormonal", "sebum"]
+    },
+    {
+      "id": "lanolin_harms_acne",
+      "primaryEntity": "lanolin",
+      "entityType": "ingredient",
+      "claim": {
+        "direction": "harms",
+        "mechanism": "is comedogenic and can clog pores leading to breakouts",
+        "confidence": "established"
+      },
+      "name": "Lanolin Clogs Pores",
+      "description": "Lanolin, derived from sheep wool, has a high comedogenic rating and can trigger acne in susceptible individuals.",
+      "condition": "acne_acne_scars",
+      "category": "animal_ingredients_in_skincare_that_harm_skin",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["comedogenic", "wool-derived"]
+    },
+    {
+      "id": "sulfates_harms_dryness",
+      "primaryEntity": "sodium lauryl sulfate",
+      "entityType": "chemical",
+      "claim": {
+        "direction": "harms",
+        "mechanism": "strips natural oils and disrupts the skin barrier",
+        "confidence": "established"
+      },
+      "name": "SLS Damages Dry Skin",
+      "description": "Sodium lauryl sulfate is a harsh surfactant that removes protective oils from skin, exacerbating dryness.",
+      "condition": "dryness_premature_aging",
+      "category": "skincare_chemicals_that_harm_skin",
+      "priority": "high",
+      "status": "active",
+      "tags": ["surfactant", "barrier-damage"]
+    },
+    {
+      "id": "abhyanga_helps_dryness",
+      "primaryEntity": "abhyanga",
+      "entityType": "practice",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "delivers oils deep into skin through massage improving hydration",
+        "confidence": "established"
+      },
+      "name": "Abhyanga Oil Massage Hydrates Skin",
+      "description": "The Ayurvedic practice of abhyanga (self-massage with warm oil) deeply nourishes and hydrates dry skin.",
       "condition": "dryness_premature_aging",
       "category": "ayurvedic_practices_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["ayurveda", "lifestyle", "hydration"]
+      "tags": ["massage", "oil-therapy"]
     },
     {
-      "id": "dryness_chemicals_harm",
-      "name": "Skincare Chemicals That Worsen Dryness",
-      "description": "Synthetic skincare ingredients that strip moisture and accelerate skin aging.",
-      "condition": "dryness_premature_aging",
-      "category": "skincare_chemicals_that_harm_skin",
-      "priority": "medium",
-      "status": "active",
-      "tags": ["ingredients", "avoid", "barrier-damage"]
-    },
-    {
-      "id": "oily_ayurvedic_herbs_eat",
-      "name": "Ayurvedic Herbs to Eat for Oily Skin",
-      "description": "Internal Ayurvedic herbs that help balance sebum production when consumed.",
+      "id": "triphala_helps_oily",
+      "primaryEntity": "triphala",
+      "entityType": "herb",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "has astringent properties that help regulate sebum when consumed",
+        "confidence": "emerging"
+      },
+      "name": "Triphala Balances Oily Skin",
+      "description": "Consuming triphala internally supports digestive health and has traditional use for balancing skin oiliness.",
       "condition": "oily_skin",
       "category": "ayurvedic_herbs_to_eat_that_benefit_skin",
-      "priority": "high",
-      "status": "active",
-      "tags": ["ayurveda", "internal", "balance"]
-    },
-    {
-      "id": "oily_other_practices",
-      "name": "Practices That Help Oily Skin",
-      "description": "Non-Ayurvedic practices and routines that help manage excess oil production.",
-      "condition": "oily_skin",
-      "category": "other_practices_that_help_skin",
       "priority": "medium",
       "status": "active",
-      "tags": ["lifestyle", "routine", "sebum-control"]
+      "tags": ["digestive", "astringent"]
     },
     {
-      "id": "oily_habits_harm",
-      "name": "Habits That Worsen Oily Skin",
-      "description": "Daily habits and behaviors that increase sebum production and skin oiliness.",
-      "condition": "oily_skin",
+      "id": "face_touching_harms_acne",
+      "primaryEntity": "face touching",
+      "entityType": "habit",
+      "claim": {
+        "direction": "harms",
+        "mechanism": "transfers bacteria and oils from hands to facial skin",
+        "confidence": "established"
+      },
+      "name": "Face Touching Causes Breakouts",
+      "description": "The habit of frequently touching the face transfers acne-causing bacteria and excess oils to the skin.",
+      "condition": "acne_acne_scars",
       "category": "habits_that_harm_skin",
       "priority": "medium",
       "status": "active",
-      "tags": ["habits", "avoid", "triggers"]
+      "tags": ["hygiene", "bacteria"]
     },
     {
-      "id": "acne_vegan_foods",
-      "name": "Vegan Foods for Acne & Scarring",
-      "description": "Plant-based foods that help reduce acne breakouts and support scar healing.",
-      "condition": "acne_acne_scars",
-      "category": "vegan_foods_that_help_skin",
-      "priority": "high",
-      "status": "active",
-      "tags": ["nutrition", "anti-inflammatory", "healing"]
-    },
-    {
-      "id": "acne_animal_skincare_harm",
-      "name": "Animal Skincare Ingredients That Worsen Acne",
-      "description": "Animal-derived skincare ingredients that may clog pores and trigger breakouts.",
-      "condition": "acne_acne_scars",
-      "category": "animal_ingredients_in_skincare_that_harm_skin",
-      "priority": "high",
-      "status": "active",
-      "tags": ["ingredients", "comedogenic", "avoid"]
-    },
-    {
-      "id": "acne_other_foods_harm",
-      "name": "Foods That Trigger Acne",
-      "description": "Non-animal foods that may contribute to acne breakouts and inflammation.",
+      "id": "refined_sugar_harms_acne",
+      "primaryEntity": "refined sugar",
+      "entityType": "food",
+      "claim": {
+        "direction": "harms",
+        "mechanism": "spikes blood glucose triggering insulin and IGF-1 which increase sebum",
+        "confidence": "established"
+      },
+      "name": "Refined Sugar Triggers Acne",
+      "description": "High glycemic foods like refined sugar cause blood sugar spikes that promote acne through hormonal pathways.",
       "condition": "acne_acne_scars",
       "category": "other_foods_that_harm_skin",
-      "priority": "medium",
-      "status": "active",
-      "tags": ["diet", "triggers", "glycemic"]
-    },
-    {
-      "id": "acne_ayurvedic_skincare",
-      "name": "Ayurvedic Herbs for Acne Skincare",
-      "description": "Traditional Ayurvedic herbs used topically to treat acne and reduce scarring.",
-      "condition": "acne_acne_scars",
-      "category": "ayurvedic_herbs_in_skincare_that_help_skin",
       "priority": "high",
       "status": "active",
-      "tags": ["ayurveda", "topical", "antibacterial"]
+      "tags": ["glycemic", "hormonal"]
+    },
+    {
+      "id": "gua_sha_helps_redness",
+      "primaryEntity": "gua sha",
+      "entityType": "practice",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "promotes lymphatic drainage reducing puffiness and evening skin tone",
+        "confidence": "emerging"
+      },
+      "name": "Gua Sha Reduces Facial Redness",
+      "description": "Regular gua sha practice improves circulation and lymphatic flow, helping to reduce facial redness over time.",
+      "condition": "redness_hyperpigmentation",
+      "category": "other_practices_that_help_skin",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["lymphatic", "circulation"]
+    },
+    {
+      "id": "kale_helps_redness",
+      "primaryEntity": "kale",
+      "entityType": "food",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "provides vitamin K and antioxidants that reduce vascular inflammation",
+        "confidence": "emerging"
+      },
+      "name": "Kale Calms Skin Redness",
+      "description": "Kale's high vitamin K and antioxidant content supports healthy capillaries and reduces inflammatory redness.",
+      "condition": "redness_hyperpigmentation",
+      "category": "vegan_foods_that_help_skin",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["vitamin-k", "antioxidant"]
+    }
+  ],
+  "invalidExamples": [
+    {
+      "example": {
+        "id": "ayurvedic_herbs_for_acne",
+        "primaryEntity": "Ayurvedic herbs",
+        "entityType": "herb",
+        "claim": {
+          "direction": "helps",
+          "mechanism": "various herbs reduce inflammation and kill bacteria"
+        },
+        "name": "Ayurvedic Herbs for Acne Treatment",
+        "description": "Traditional Ayurvedic herbs like neem, turmeric, and tulsi that help with acne.",
+        "condition": "acne_acne_scars",
+        "category": "ayurvedic_herbs_in_skincare_that_help_skin",
+        "priority": "high",
+        "status": "active"
+      },
+      "invalidReason": "FAILS ATOMICITY: (1) primaryEntity 'Ayurvedic herbs' is a bucket category, not a single entity — should be split into separate topics for 'neem', 'turmeric', 'tulsi'. (2) Name contains 'herbs' plural indicating multiple items. (3) Description lists multiple entities with 'like neem, turmeric, and tulsi'. (4) Mechanism mentions 'various herbs' which is vague. Each herb should be its own topic with its own specific mechanism."
     }
   ]
 }
