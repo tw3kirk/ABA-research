@@ -93,7 +93,20 @@ export {
   loadSeoGuidelinesFromFile,
   validateContentStandards,
   validateSeoGuidelines,
+  loadTopicContentConstraints,
   StandardsValidationError,
   type StandardsIssue,
   type ValidationResult,
+  type LoadTopicConstraintsOptions,
 } from "./loader.js";
+
+// Topic-aware content constraints
+export {
+  deriveTopicConstraints,
+  formatConstraintIssues,
+  GuidelineRuleSchema,
+  type GuidelineRule,
+  type TopicContentConstraints,
+  type ConstraintIssue,
+  type TopicConstraintsResult,
+} from "./topic-constraints.js";

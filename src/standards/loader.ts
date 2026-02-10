@@ -15,6 +15,11 @@
 import { readFileSync } from "node:fs";
 import { ContentStandardsSchema, type ContentStandards } from "./content-schema.js";
 import { SeoGuidelinesSchema, type SeoGuidelines } from "./seo-schema.js";
+import type { Topic } from "../topics/schema.js";
+import {
+  deriveTopicConstraints,
+  type TopicConstraintsResult,
+} from "./topic-constraints.js";
 
 /**
  * Validation error for standards loading.
@@ -305,4 +310,88 @@ export function validateSeoGuidelines(input: unknown): ValidationResult<SeoGuide
     }
     throw err;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Topic-aware content constraints
+// ---------------------------------------------------------------------------
+
+/**
+ * Options for loading topic-aware content constraints.
+ */
+export interface LoadTopicConstraintsOptions {
+  /** Validated atomic topics to derive constraints for. */
+  topics: readonly Topic[];
+  /** Loaded content standards (or raw input to be loaded). */
+  contentStandards: Readonly<ContentStandards> | unknown;
+  /** Loaded SEO guidelines (or raw input to be loaded). */
+  seoGuidelines: Readonly<SeoGuidelines> | unknown;
+  /** Optional custom guideline rules for per-entity/condition overrides. */
+  guidelineRules?: unknown[];
+}
+
+/**
+ * Load and derive per-topic content constraints.
+ *
+ * Accepts atomic topics along with content standards and SEO guidelines
+ * (either pre-loaded or raw), then:
+ *
+ * 1. Loads and validates standards/guidelines if raw input is given
+ * 2. Normalizes guidelines against the topics' atomic fields
+ * 3. Rejects guideline rules that reference invalid entities or conditions
+ * 4. Detects SEO rules that contradict topic keyword shapes
+ * 5. Derives per-topic SEO target phrases, email intents, and blog keyword sets
+ *
+ * @param options - Topics, standards, guidelines, and optional custom rules
+ * @returns Derivation result with per-topic constraints and any issues
+ * @throws StandardsValidationError if standards or guidelines fail validation
+ */
+export function loadTopicContentConstraints(
+  options: LoadTopicConstraintsOptions
+): TopicConstraintsResult {
+  // Load standards if raw input was provided
+  const contentStandards =
+    isContentStandards(options.contentStandards)
+      ? options.contentStandards
+      : loadContentStandards(options.contentStandards);
+
+  const seoGuidelines =
+    isSeoGuidelines(options.seoGuidelines)
+      ? options.seoGuidelines
+      : loadSeoGuidelines(options.seoGuidelines);
+
+  return deriveTopicConstraints(
+    options.topics,
+    contentStandards,
+    seoGuidelines,
+    options.guidelineRules
+  );
+}
+
+/**
+ * Type guard: check if a value looks like already-loaded ContentStandards.
+ */
+function isContentStandards(value: unknown): value is Readonly<ContentStandards> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "version" in value &&
+    "tone" in value &&
+    "citations" in value &&
+    "forbidden" in value
+  );
+}
+
+/**
+ * Type guard: check if a value looks like already-loaded SeoGuidelines.
+ */
+function isSeoGuidelines(value: unknown): value is Readonly<SeoGuidelines> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "version" in value &&
+    "keywordDensity" in value &&
+    "headingStructure" in value &&
+    "contentLength" in value
+  );
 }
