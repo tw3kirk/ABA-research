@@ -2,7 +2,10 @@
  * Prompt renderer.
  *
  * Takes a ParsedTemplate and a PromptContext and produces the final
- * prompt string. Enforces strict variable discipline:
+ * prompt string. Enforces strict variable discipline and centrally
+ * injects constraints that templates cannot bypass.
+ *
+ * Processing pipeline:
  *
  *   1. Conditional blocks are resolved first — each `{{#if …}}…{{/if}}`
  *      block is either included or excluded based on context values.
@@ -11,9 +14,13 @@
  *   3. Optionally, every variable in the context SHOULD be used by the
  *      template — either as a {{variable}} placeholder in the resolved
  *      text or as a conditional test variable (strict mode).
+ *   4. If PromptConstraints are provided, they are appended as an
+ *      immutable "Constraints & Exclusions" section that the template
+ *      cannot modify or omit.
  *
  * The renderer does NOT perform any content generation — it is purely
- * mechanical text substitution and conditional evaluation.
+ * mechanical text substitution, conditional evaluation, and constraint
+ * injection.
  */
 
 import type { ParsedTemplate } from "./template.js";
@@ -21,6 +28,7 @@ import { extractVariables } from "./template.js";
 import type { PromptContext, PromptVariable } from "./context.js";
 import { isUnset } from "./context.js";
 import { resolveConditionals } from "./conditional.js";
+import { formatConstraints, type PromptConstraints } from "./constraints.js";
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -70,6 +78,19 @@ export interface RenderOptions {
    * only a subset of the available context.
    */
   strict?: boolean;
+
+  /**
+   * Prompt constraints to inject after rendering.
+   *
+   * When provided, the formatted constraint text is appended to the end
+   * of the rendered prompt as a clearly labeled "Constraints & Exclusions"
+   * section. This injection happens AFTER all template processing, making
+   * it impossible for template content to modify, suppress, or reorder
+   * the constraints.
+   *
+   * Build these via `buildPromptConstraints()` from constraints.ts.
+   */
+  constraints?: PromptConstraints;
 }
 
 // ---------------------------------------------------------------------------
@@ -88,11 +109,13 @@ const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z][a-zA-Z0-9_.]*)\s*\}\}/g;
  *   3. Check all remaining variables have values (not UNSET)
  *   4. In strict mode, check no context variables are unused
  *   5. Perform variable substitution
+ *   6. Inject constraints (if provided) — appended unconditionally
  *
- * @param template - A previously parsed (and validated) template
- * @param context  - A PromptContext built via buildPromptContext()
- * @param options  - Rendering options (strict mode, etc.)
- * @returns The final prompt string with all conditionals and placeholders resolved
+ * @param template    - A previously parsed (and validated) template
+ * @param context     - A PromptContext built via buildPromptContext()
+ * @param options     - Rendering options (strict mode, constraints, etc.)
+ * @returns The final prompt string with all conditionals, placeholders,
+ *          and constraints resolved
  *
  * @throws PromptRenderError   if any remaining variable is missing or UNSET
  * @throws UnusedVariableError if strict mode is on and context has unused vars
@@ -102,7 +125,7 @@ export function renderPrompt(
   context: PromptContext,
   options: RenderOptions = {}
 ): string {
-  const { strict = true } = options;
+  const { strict = true, constraints } = options;
   const templateName = template.name ?? "(anonymous)";
 
   // --- 1. Resolve conditional blocks ---
@@ -151,6 +174,14 @@ export function renderPrompt(
   const rendered = resolvedSource.replace(PLACEHOLDER_RE, (_match, name: string) => {
     return context[name as PromptVariable] ?? "";
   });
+
+  // --- 6. Inject constraints (if provided) ---
+  // Constraints are appended AFTER all template processing. The template
+  // has no mechanism to suppress, reorder, or modify this section.
+  if (constraints) {
+    const constraintBlock = formatConstraints(constraints);
+    return rendered + "\n" + constraintBlock;
+  }
 
   return rendered;
 }
