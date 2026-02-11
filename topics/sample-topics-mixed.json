@@ -1,0 +1,141 @@
+{
+  "version": "2.0.0",
+  "topics": [
+    {
+      "id": "turmeric_helps_redness",
+      "primaryEntity": "turmeric",
+      "entityType": "herb",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "contains curcumin which inhibits inflammatory cytokines",
+        "confidence": "established"
+      },
+      "name": "Turmeric Reduces Skin Redness",
+      "description": "Turmeric's active compound curcumin has been shown to reduce inflammatory markers associated with skin redness and hyperpigmentation.",
+      "condition": "redness_hyperpigmentation",
+      "category": "ayurvedic_herbs_in_skincare_that_help_skin",
+      "priority": "high",
+      "status": "active",
+      "tags": ["anti-inflammatory", "curcumin"]
+    },
+    {
+      "id": "avocado_helps_dryness",
+      "primaryEntity": "avocado",
+      "entityType": "food",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "provides monounsaturated fatty acids that support skin barrier function",
+        "confidence": "established"
+      },
+      "name": "Avocado Improves Dry Skin",
+      "description": "Avocado consumption provides healthy fats and vitamin E that support skin hydration from within.",
+      "condition": "dryness_premature_aging",
+      "category": "vegan_foods_that_help_skin",
+      "priority": "high",
+      "status": "active",
+      "tags": ["healthy-fats", "vitamin-e"]
+    },
+    {
+      "id": "dairy_harms_acne",
+      "primaryEntity": "dairy",
+      "entityType": "food",
+      "claim": {
+        "direction": "harms",
+        "mechanism": "contains hormones and growth factors that stimulate sebum production",
+        "confidence": "emerging"
+      },
+      "name": "Dairy Worsens Acne",
+      "description": "Dairy consumption has been associated with increased acne severity due to its hormone content affecting sebaceous gland activity.",
+      "condition": "acne_acne_scars",
+      "category": "animal_ingredients_in_food_that_harm_skin",
+      "priority": "high",
+      "status": "active",
+      "tags": ["hormonal", "sebum"]
+    },
+    {
+      "id": "dairy_harms_acne_dup",
+      "primaryEntity": "dairy",
+      "entityType": "food",
+      "claim": {
+        "direction": "harms",
+        "mechanism": "increases IGF-1 levels promoting sebocyte proliferation",
+        "confidence": "emerging"
+      },
+      "name": "Dairy Increases Acne Through IGF-1",
+      "description": "Dairy consumption raises insulin-like growth factor 1, which promotes sebocyte proliferation and acne lesions.",
+      "condition": "acne_acne_scars",
+      "category": "animal_ingredients_in_food_that_harm_skin",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["hormonal", "igf-1"]
+    },
+    {
+      "id": "herbs_and_spices_help_skin",
+      "primaryEntity": "herbs and spices",
+      "entityType": "herb",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "various compounds reduce inflammation and improve circulation",
+        "confidence": "preliminary"
+      },
+      "name": "Herbs and Spices Improve Skin Health",
+      "description": "Several herbs and spices contain anti-inflammatory compounds that can benefit oily skin when consumed regularly.",
+      "condition": "oily_skin",
+      "category": "ayurvedic_herbs_to_eat_that_benefit_skin",
+      "priority": "low",
+      "status": "active",
+      "tags": ["anti-inflammatory"]
+    },
+    {
+      "id": "foods_that_help_dryness",
+      "primaryEntity": "various foods",
+      "entityType": "food",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "multiple nutrients support skin barrier and hydration",
+        "confidence": "preliminary"
+      },
+      "name": "Foods That Hydrate Dry Skin",
+      "description": "Certain foods provide essential fatty acids and vitamins that help combat dry skin from the inside out.",
+      "condition": "dryness_premature_aging",
+      "category": "vegan_foods_that_help_skin",
+      "priority": "low",
+      "status": "active",
+      "tags": ["nutrition"]
+    },
+    {
+      "id": "neem_helps_acne",
+      "primaryEntity": "neem",
+      "entityType": "herb",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "exhibits antibacterial properties against P. acnes bacteria",
+        "confidence": "established"
+      },
+      "name": "Neem Reduces Acne Breakouts",
+      "description": "Neem leaf extract applied topically demonstrates antibacterial activity that helps reduce acne-causing bacteria.",
+      "condition": "acne_acne_scars",
+      "category": "ayurvedic_herbs_in_skincare_that_help_skin",
+      "priority": "high",
+      "status": "active",
+      "tags": ["antibacterial", "topical"]
+    },
+    {
+      "id": "kale_helps_redness",
+      "primaryEntity": "kale",
+      "entityType": "food",
+      "claim": {
+        "direction": "helps",
+        "mechanism": "provides vitamin K and antioxidants that reduce vascular inflammation",
+        "confidence": "emerging"
+      },
+      "name": "Kale Calms Skin Redness",
+      "description": "Kale's high vitamin K and antioxidant content supports healthy capillaries and reduces inflammatory redness.",
+      "condition": "redness_hyperpigmentation",
+      "category": "vegan_foods_that_help_skin",
+      "priority": "medium",
+      "status": "active",
+      "tags": ["vitamin-k", "antioxidant"]
+    }
+  ]
+}
