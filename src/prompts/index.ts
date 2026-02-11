@@ -3,7 +3,8 @@
  *
  * Provides typed, validated prompt template loading and rendering
  * for the research pipeline. Templates use `{{variable}}` placeholders
- * that are validated against a typed context derived from the domain model.
+ * and `{{#if …}}…{{/if}}` conditional blocks that are validated against
+ * a typed context derived from the domain model.
  *
  * ═══════════════════════════════════════════════════════════════════════════
  * USAGE
@@ -16,7 +17,7 @@
  *   renderPrompt,
  * } from "./prompts/index.js";
  *
- * // 1. Load a template
+ * // 1. Load a template (with conditionals)
  * const loader = new PromptTemplateLoader("prompts/");
  * const template = loader.load("deep-research.md");
  *
@@ -28,7 +29,7 @@
  *   seoGuidelines,
  * });
  *
- * // 3. Render the final prompt
+ * // 3. Render — conditionals are resolved, then variables substituted
  * const prompt = renderPrompt(template, context, { strict: false });
  * ```
  *
@@ -43,9 +44,21 @@
  * for (const topic of specification.topics) {
  *   const ctx = buildPromptContext({ topic, specification });
  *   const prompt = renderPrompt(template, ctx, { strict: false });
- *   // send prompt to LLM
+ *   // each topic gets its own conditional branches + variable values
  * }
  * ```
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CONDITIONAL SYNTAX
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Templates support three forms of conditionals:
+ *
+ *   Truthy:     {{#if variable}}body{{/if}}
+ *   Equality:   {{#if variable == "value"}}body{{/if}}
+ *   Inequality: {{#if variable != "value"}}body{{/if}}
+ *
+ * See conditional.ts for full documentation.
  */
 
 // Context
@@ -81,3 +94,14 @@ export {
   PromptTemplateLoader,
   TemplateLoadError,
 } from "./loader.js";
+
+// Conditionals
+export {
+  parseConditionalBlocks,
+  evaluateCondition,
+  resolveConditionals,
+  getEnumValues,
+  ConditionalParseError,
+  type ConditionalBlock,
+  type ConditionalOperator,
+} from "./conditional.js";

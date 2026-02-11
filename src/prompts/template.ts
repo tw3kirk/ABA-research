@@ -2,15 +2,29 @@
  * Prompt template parsing and variable extraction.
  *
  * A prompt template is a plain-text string (typically loaded from a .md or
- * .txt file) containing `{{variable.path}}` placeholders.  This module
- * extracts those placeholders and validates them against the typed
- * PromptContextMap so that invalid variable references are caught before
- * rendering.
+ * .txt file) containing `{{variable.path}}` placeholders and optional
+ * `{{#if …}}…{{/if}}` conditional blocks.  This module extracts those
+ * constructs and validates them against the typed PromptContextMap so that
+ * invalid variable references are caught before rendering.
  *
  * TEMPLATE FORMAT:
  *
- *   {{topic.entity}}            — simple variable substitution
- *   {{topic.claim.direction}}   — nested path (flattened by convention)
+ *   VARIABLE SUBSTITUTION:
+ *     {{topic.entity}}            — simple variable substitution
+ *     {{topic.claim.direction}}   — nested path (flattened by convention)
+ *
+ *   CONDITIONAL BLOCKS:
+ *     {{#if topic.claim.direction == "harms"}}
+ *     Include harmful-entity research sections.
+ *     {{/if}}
+ *
+ *     {{#if topic.claim.mechanism}}        — truthy check
+ *     Mechanism: {{topic.claim.mechanism}}
+ *     {{/if}}
+ *
+ *     {{#if topic.category != "habits_that_harm_skin"}}
+ *     Include dietary research.
+ *     {{/if}}
  *
  * Rules:
  *   - Placeholders use double-brace syntax: {{ and }}
@@ -18,9 +32,16 @@
  *   - Whitespace inside braces is trimmed: {{ topic.entity }} is valid
  *   - Unrecognized variable names are rejected at validation time
  *   - Duplicate placeholders in a template are fine (same value rendered)
+ *   - Conditional variables are validated for name and (where applicable)
+ *     enum value correctness at parse time
+ *   - No nested conditionals
  */
 
 import type { PromptVariable } from "./context.js";
+import {
+  parseConditionalBlocks,
+  type ConditionalBlock,
+} from "./conditional.js";
 
 // ---------------------------------------------------------------------------
 // Regex
@@ -45,8 +66,10 @@ const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z][a-zA-Z0-9_.]*)\s*\}\}/g;
 export interface ParsedTemplate {
   /** The raw template source string (with placeholders intact). */
   source: string;
-  /** Unique variable names found in the template, sorted. */
+  /** Unique variable names found in {{…}} placeholders, sorted. */
   variables: PromptVariable[];
+  /** Parsed conditional blocks ({{#if …}}…{{/if}}). */
+  conditionals: ConditionalBlock[];
   /** Optional name/id for error messages. */
   name?: string;
 }
@@ -174,14 +197,24 @@ export function extractVariables(source: string): string[] {
 // ---------------------------------------------------------------------------
 
 /**
- * Parse a template string, extracting and validating all variables.
+ * Parse a template string, extracting and validating all variables
+ * and conditional blocks.
  *
  * @param source - The raw template text
  * @param name   - Optional template name for error messages
- * @returns A ParsedTemplate with validated variables
- * @throws TemplateParseError if any variable name is not in PromptContextMap
+ * @returns A ParsedTemplate with validated variables and conditionals
+ * @throws TemplateParseError      if any {{variable}} name is invalid
+ * @throws ConditionalParseError   if any conditional references invalid vars/enums
  */
 export function parseTemplate(source: string, name?: string): ParsedTemplate {
+  // 1. Parse conditional blocks (validates variable names + enum values)
+  const conditionals = parseConditionalBlocks(
+    source,
+    name ?? "(anonymous)",
+    isValidVariable
+  );
+
+  // 2. Extract {{variable}} placeholders
   const rawVariables = extractVariables(source);
   const invalid = rawVariables.filter((v) => !isValidVariable(v));
 
@@ -192,6 +225,7 @@ export function parseTemplate(source: string, name?: string): ParsedTemplate {
   return {
     source,
     variables: rawVariables as PromptVariable[],
+    conditionals,
     name,
   };
 }

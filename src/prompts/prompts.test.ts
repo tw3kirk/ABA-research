@@ -34,6 +34,14 @@ import {
   UnusedVariableError,
 } from "./renderer.js";
 import { PromptTemplateLoader, TemplateLoadError } from "./loader.js";
+import {
+  parseConditionalBlocks,
+  evaluateCondition,
+  resolveConditionals,
+  getEnumValues,
+  ConditionalParseError,
+  type ConditionalBlock,
+} from "./conditional.js";
 import type { Topic } from "../topics/schema.js";
 import type { ResearchSpecification } from "../specification/schema.js";
 import type { ContentStandards } from "../standards/content-schema.js";
@@ -775,6 +783,631 @@ test("render deep-research.md with full context", () => {
   assert.ok(result.includes("1200"), "Should contain SEO word count min");
   assert.ok(!result.includes("{{"), "No unresolved placeholders");
   assert.ok(!result.includes("__UNSET__"), "No UNSET sentinels");
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 7. CONDITIONAL BLOCK PARSING
+// ═══════════════════════════════════════════════════════════════════════════
+
+section("Conditional Parsing");
+
+test("parseConditionalBlocks extracts equality conditional", () => {
+  const source = '{{#if topic.claim.direction == "harms"}}Harmful content.{{/if}}';
+  const blocks = parseConditionalBlocks(source, "eq-test", isValidVariable);
+
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].variable, "topic.claim.direction");
+  assert.equal(blocks[0].operator, "==");
+  assert.equal(blocks[0].value, "harms");
+  assert.equal(blocks[0].body, "Harmful content.");
+});
+
+test("parseConditionalBlocks extracts inequality conditional", () => {
+  const source = '{{#if topic.category != "habits_that_harm_skin"}}Not a habit.{{/if}}';
+  const blocks = parseConditionalBlocks(source, "neq-test", isValidVariable);
+
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].operator, "!=");
+  assert.equal(blocks[0].value, "habits_that_harm_skin");
+});
+
+test("parseConditionalBlocks extracts truthy conditional", () => {
+  const source = "{{#if topic.claim.mechanism}}Has mechanism.{{/if}}";
+  const blocks = parseConditionalBlocks(source, "truthy-test", isValidVariable);
+
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].operator, "truthy");
+  assert.equal(blocks[0].value, undefined);
+});
+
+test("parseConditionalBlocks extracts multiple blocks", () => {
+  const source =
+    '{{#if topic.claim.direction == "helps"}}Good.{{/if}} ' +
+    '{{#if topic.condition == "acne_acne_scars"}}Acne.{{/if}}';
+  const blocks = parseConditionalBlocks(source, "multi-test", isValidVariable);
+
+  assert.equal(blocks.length, 2);
+  assert.equal(blocks[0].variable, "topic.claim.direction");
+  assert.equal(blocks[1].variable, "topic.condition");
+});
+
+test("parseConditionalBlocks preserves body with placeholders", () => {
+  const source =
+    '{{#if topic.condition == "acne_acne_scars"}}' +
+    "Acne info for {{topic.entity}}." +
+    "{{/if}}";
+  const blocks = parseConditionalBlocks(source, "body-test", isValidVariable);
+
+  assert.equal(blocks.length, 1);
+  assert.ok(blocks[0].body.includes("{{topic.entity}}"));
+});
+
+test("parseConditionalBlocks throws for invalid variable name", () => {
+  const source = '{{#if invalid.field == "value"}}Content.{{/if}}';
+  assert.throws(
+    () => parseConditionalBlocks(source, "bad-var", isValidVariable),
+    (err: unknown) => {
+      assert.ok(err instanceof ConditionalParseError);
+      assert.equal(err.templateName, "bad-var");
+      assert.ok(err.issues.some((i: string) => i.includes("invalid.field")));
+      return true;
+    }
+  );
+});
+
+test("parseConditionalBlocks throws for invalid enum value", () => {
+  const source = '{{#if topic.condition == "not_a_real_condition"}}Content.{{/if}}';
+  assert.throws(
+    () => parseConditionalBlocks(source, "bad-enum", isValidVariable),
+    (err: unknown) => {
+      assert.ok(err instanceof ConditionalParseError);
+      assert.ok(err.issues.some((i: string) => i.includes("not_a_real_condition")));
+      assert.ok(err.issues.some((i: string) => i.includes("allowed:")));
+      return true;
+    }
+  );
+});
+
+test("parseConditionalBlocks throws for invalid category enum", () => {
+  const source = '{{#if topic.category == "animal_foods_harm_skin"}}Content.{{/if}}';
+  assert.throws(
+    () => parseConditionalBlocks(source, "bad-cat", isValidVariable),
+    (err: unknown) => {
+      assert.ok(err instanceof ConditionalParseError);
+      assert.ok(err.issues.some((i: string) => i.includes("animal_foods_harm_skin")));
+      return true;
+    }
+  );
+});
+
+test("parseConditionalBlocks allows non-enum variables with any value", () => {
+  const source = '{{#if topic.entity == "turmeric"}}Turmeric content.{{/if}}';
+  const blocks = parseConditionalBlocks(source, "free-val", isValidVariable);
+
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].value, "turmeric");
+});
+
+test("parseConditionalBlocks rejects nested conditionals", () => {
+  const source =
+    '{{#if topic.claim.direction == "harms"}}' +
+    '{{#if topic.condition == "acne_acne_scars"}}Nested.{{/if}}' +
+    "{{/if}}";
+  assert.throws(
+    () => parseConditionalBlocks(source, "nested", isValidVariable),
+    (err: unknown) => {
+      assert.ok(err instanceof ConditionalParseError);
+      assert.ok(err.issues.some((i: string) => i.includes("Nested")));
+      return true;
+    }
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 8. CONDITIONAL EVALUATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+section("Conditional Evaluation");
+
+test("evaluateCondition: truthy returns true for non-empty string", () => {
+  const block: ConditionalBlock = {
+    variable: "topic.entity" as any,
+    operator: "truthy",
+    body: "content",
+    raw: "",
+  };
+  assert.equal(evaluateCondition(block, "turmeric"), true);
+});
+
+test("evaluateCondition: truthy returns false for empty string", () => {
+  const block: ConditionalBlock = {
+    variable: "topic.entity" as any,
+    operator: "truthy",
+    body: "content",
+    raw: "",
+  };
+  assert.equal(evaluateCondition(block, ""), false);
+});
+
+test("evaluateCondition: truthy returns false for UNSET", () => {
+  const block: ConditionalBlock = {
+    variable: "topic.entity" as any,
+    operator: "truthy",
+    body: "content",
+    raw: "",
+  };
+  assert.equal(evaluateCondition(block, "__UNSET__"), false);
+});
+
+test("evaluateCondition: == returns true on match", () => {
+  const block: ConditionalBlock = {
+    variable: "topic.claim.direction" as any,
+    operator: "==",
+    value: "harms",
+    body: "content",
+    raw: "",
+  };
+  assert.equal(evaluateCondition(block, "harms"), true);
+});
+
+test("evaluateCondition: == returns false on mismatch", () => {
+  const block: ConditionalBlock = {
+    variable: "topic.claim.direction" as any,
+    operator: "==",
+    value: "harms",
+    body: "content",
+    raw: "",
+  };
+  assert.equal(evaluateCondition(block, "helps"), false);
+});
+
+test("evaluateCondition: == returns false for UNSET", () => {
+  const block: ConditionalBlock = {
+    variable: "research.runId" as any,
+    operator: "==",
+    value: "some-id",
+    body: "content",
+    raw: "",
+  };
+  assert.equal(evaluateCondition(block, "__UNSET__"), false);
+});
+
+test("evaluateCondition: != returns true on mismatch", () => {
+  const block: ConditionalBlock = {
+    variable: "topic.claim.direction" as any,
+    operator: "!=",
+    value: "harms",
+    body: "content",
+    raw: "",
+  };
+  assert.equal(evaluateCondition(block, "helps"), true);
+});
+
+test("evaluateCondition: != returns false on match", () => {
+  const block: ConditionalBlock = {
+    variable: "topic.claim.direction" as any,
+    operator: "!=",
+    value: "harms",
+    body: "content",
+    raw: "",
+  };
+  assert.equal(evaluateCondition(block, "harms"), false);
+});
+
+test("evaluateCondition: != returns true for UNSET", () => {
+  const block: ConditionalBlock = {
+    variable: "research.runId" as any,
+    operator: "!=",
+    value: "some-id",
+    body: "content",
+    raw: "",
+  };
+  assert.equal(evaluateCondition(block, "__UNSET__"), true);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 9. CONDITIONAL RESOLUTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+section("Conditional Resolution");
+
+test("resolveConditionals includes block when condition is true", () => {
+  const source = 'Before.{{#if topic.claim.direction == "helps"}}INCLUDED.{{/if}}After.';
+  const ctx = { "topic.claim.direction": "helps" } as any;
+
+  const result = resolveConditionals(source, ctx);
+  assert.equal(result, "Before.INCLUDED.After.");
+});
+
+test("resolveConditionals excludes block when condition is false", () => {
+  const source = 'Before.{{#if topic.claim.direction == "harms"}}EXCLUDED.{{/if}}After.';
+  const ctx = { "topic.claim.direction": "helps" } as any;
+
+  const result = resolveConditionals(source, ctx);
+  assert.equal(result, "Before.After.");
+});
+
+test("resolveConditionals handles truthy check", () => {
+  const source = "{{#if topic.claim.mechanism}}Has mechanism.{{/if}}";
+  const ctx = { "topic.claim.mechanism": "reduces inflammation" } as any;
+
+  const result = resolveConditionals(source, ctx);
+  assert.equal(result, "Has mechanism.");
+});
+
+test("resolveConditionals excludes truthy block for empty value", () => {
+  const source = "{{#if topic.claim.mechanism}}Has mechanism.{{/if}}";
+  const ctx = { "topic.claim.mechanism": "" } as any;
+
+  const result = resolveConditionals(source, ctx);
+  assert.equal(result, "");
+});
+
+test("resolveConditionals handles != operator", () => {
+  const source =
+    '{{#if topic.category != "habits_that_harm_skin"}}Not habits.{{/if}}';
+  const ctx = { "topic.category": "vegan_foods_that_help_skin" } as any;
+
+  const result = resolveConditionals(source, ctx);
+  assert.equal(result, "Not habits.");
+});
+
+test("resolveConditionals handles multiple blocks independently", () => {
+  const source =
+    '{{#if topic.claim.direction == "helps"}}HELPS.{{/if}}' +
+    '{{#if topic.claim.direction == "harms"}}HARMS.{{/if}}';
+  const ctx = { "topic.claim.direction": "helps" } as any;
+
+  const result = resolveConditionals(source, ctx);
+  assert.equal(result, "HELPS.");
+});
+
+test("resolveConditionals preserves placeholders in body", () => {
+  const source =
+    '{{#if topic.claim.direction == "helps"}}' +
+    "Entity: {{topic.entity}}" +
+    "{{/if}}";
+  const ctx = { "topic.claim.direction": "helps" } as any;
+
+  const result = resolveConditionals(source, ctx);
+  assert.equal(result, "Entity: {{topic.entity}}");
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 10. FULL RENDER WITH CONDITIONALS
+// ═══════════════════════════════════════════════════════════════════════════
+
+section("Render with Conditionals");
+
+test("renderPrompt includes matching conditional block", () => {
+  const source =
+    "Topic: {{topic.entity}}.\n" +
+    '{{#if topic.claim.direction == "helps"}}This entity helps skin.{{/if}}';
+  const template = parseTemplate(source, "cond-include");
+
+  const ctx = buildPromptContext({ topic: makeTopic() }); // direction = "helps"
+  const result = renderPrompt(template, ctx, { strict: false });
+
+  assert.ok(result.includes("Topic: turmeric."));
+  assert.ok(result.includes("This entity helps skin."));
+});
+
+test("renderPrompt excludes non-matching conditional block", () => {
+  const source =
+    "Topic: {{topic.entity}}.\n" +
+    '{{#if topic.claim.direction == "harms"}}This entity harms skin.{{/if}}';
+  const template = parseTemplate(source, "cond-exclude");
+
+  const ctx = buildPromptContext({ topic: makeTopic() }); // direction = "helps"
+  const result = renderPrompt(template, ctx, { strict: false });
+
+  assert.ok(result.includes("Topic: turmeric."));
+  assert.ok(!result.includes("This entity harms skin."));
+});
+
+test("renderPrompt renders variables inside included conditional", () => {
+  const source =
+    '{{#if topic.claim.direction == "helps"}}' +
+    "{{topic.entity}} helps {{topic.condition}}." +
+    "{{/if}}";
+  const template = parseTemplate(source, "cond-vars");
+
+  const ctx = buildPromptContext({ topic: makeTopic() });
+  const result = renderPrompt(template, ctx, { strict: false });
+
+  assert.equal(result, "turmeric helps redness_hyperpigmentation.");
+});
+
+test("renderPrompt does not require variables inside excluded conditional", () => {
+  // Template has research.runId inside a conditional that won't match,
+  // and we don't provide a specification. Should not throw.
+  const source =
+    "Topic: {{topic.entity}}.\n" +
+    '{{#if topic.claim.direction == "harms"}}Run: {{research.runId}}{{/if}}';
+  const template = parseTemplate(source, "cond-no-require");
+
+  const ctx = buildPromptContext({ topic: makeTopic() }); // no specification
+  const result = renderPrompt(template, ctx, { strict: false });
+
+  assert.ok(result.includes("Topic: turmeric."));
+  assert.ok(!result.includes("research.runId"));
+  assert.ok(!result.includes("__UNSET__"));
+});
+
+test("renderPrompt with category-specific conditional", () => {
+  const source =
+    "# {{topic.name}}\n\n" +
+    '{{#if topic.category == "ayurvedic_herbs_in_skincare_that_help_skin"}}' +
+    "Reference Ayurvedic texts for {{topic.entity}}.\n" +
+    "{{/if}}" +
+    '{{#if topic.category == "animal_ingredients_in_food_that_harm_skin"}}' +
+    "Investigate hormonal pathways.\n" +
+    "{{/if}}";
+  const template = parseTemplate(source, "cat-cond");
+
+  // Topic is in ayurvedic herbs category
+  const ctx = buildPromptContext({ topic: makeTopic() });
+  const result = renderPrompt(template, ctx, { strict: false });
+
+  assert.ok(result.includes("Reference Ayurvedic texts for turmeric."));
+  assert.ok(!result.includes("Investigate hormonal pathways."));
+});
+
+test("renderPrompt with condition-specific conditional", () => {
+  const source =
+    '{{#if topic.condition == "acne_acne_scars"}}Acne section.{{/if}}' +
+    '{{#if topic.condition == "redness_hyperpigmentation"}}Redness section.{{/if}}';
+  const template = parseTemplate(source, "condition-cond");
+
+  const ctx = buildPromptContext({ topic: makeTopic() }); // condition = redness
+  const result = renderPrompt(template, ctx, { strict: false });
+
+  assert.ok(!result.includes("Acne section."));
+  assert.ok(result.includes("Redness section."));
+});
+
+test("renderPrompt with confidence-level conditional", () => {
+  const source =
+    '{{#if topic.claim.confidence == "preliminary"}}' +
+    "Low confidence warning.\n" +
+    "{{/if}}" +
+    "Report for {{topic.entity}}.";
+  const template = parseTemplate(source, "confidence-cond");
+
+  // Default topic has confidence "established"
+  const ctx1 = buildPromptContext({ topic: makeTopic() });
+  const result1 = renderPrompt(template, ctx1, { strict: false });
+  assert.ok(!result1.includes("Low confidence warning."));
+  assert.ok(result1.includes("Report for turmeric."));
+
+  // Topic with preliminary confidence
+  const ctx2 = buildPromptContext({
+    topic: makeTopic({
+      id: "kale_helps_redness",
+      primaryEntity: "kale",
+      entityType: "food",
+      category: "vegan_foods_that_help_skin",
+      claim: { direction: "helps", mechanism: "provides antioxidant vitamin C", confidence: "preliminary" },
+      name: "Kale Reduces Redness",
+    }),
+  });
+  const result2 = renderPrompt(template, ctx2, { strict: false });
+  assert.ok(result2.includes("Low confidence warning."));
+  assert.ok(result2.includes("Report for kale."));
+});
+
+test("renderPrompt: same template renders differently for helps vs harms topics", () => {
+  const source =
+    "# {{topic.entity}}\n" +
+    '{{#if topic.claim.direction == "helps"}}BENEFIT: {{topic.entity}} supports skin.{{/if}}' +
+    '{{#if topic.claim.direction == "harms"}}WARNING: {{topic.entity}} damages skin.{{/if}}';
+  const template = parseTemplate(source, "dual-direction");
+
+  // Helps topic
+  const helpsCtx = buildPromptContext({ topic: makeTopic() });
+  const helpsResult = renderPrompt(template, helpsCtx, { strict: false });
+  assert.ok(helpsResult.includes("BENEFIT: turmeric supports skin."));
+  assert.ok(!helpsResult.includes("WARNING:"));
+
+  // Harms topic
+  const harmsTopic = makeTopic({
+    id: "dairy_harms_acne",
+    primaryEntity: "dairy",
+    entityType: "food",
+    claim: { direction: "harms", mechanism: "hormones stimulate sebum", confidence: "emerging" },
+    name: "Dairy Worsens Acne",
+    condition: "acne_acne_scars",
+    category: "animal_ingredients_in_food_that_harm_skin",
+  });
+  const harmsCtx = buildPromptContext({ topic: harmsTopic });
+  const harmsResult = renderPrompt(template, harmsCtx, { strict: false });
+  assert.ok(!harmsResult.includes("BENEFIT:"));
+  assert.ok(harmsResult.includes("WARNING: dairy damages skin."));
+});
+
+test("parseTemplate throws ConditionalParseError for invalid conditional var", () => {
+  const source = '{{#if nonexistent.var == "value"}}Content.{{/if}}';
+  assert.throws(
+    () => parseTemplate(source, "bad-cond-var"),
+    (err: unknown) => {
+      assert.ok(err instanceof ConditionalParseError);
+      return true;
+    }
+  );
+});
+
+test("parseTemplate throws ConditionalParseError for invalid enum value", () => {
+  const source = '{{#if topic.condition == "fake_condition"}}Content.{{/if}}';
+  assert.throws(
+    () => parseTemplate(source, "bad-cond-enum"),
+    (err: unknown) => {
+      assert.ok(err instanceof ConditionalParseError);
+      return true;
+    }
+  );
+});
+
+test("conditionals count as used in strict mode", () => {
+  // Build a template that uses ALL variables: all as {{var}} placeholders,
+  // plus one via a conditional. The conditional variable should count as used.
+  const allVars = getValidVariables();
+  const source =
+    allVars.map((v) => `{{${v}}}`).join(" ") +
+    '\n{{#if topic.claim.direction == "helps"}}Conditional section.{{/if}}';
+  const template = parseTemplate(source, "strict-cond");
+
+  const ctx = buildPromptContext({
+    topic: makeTopic(),
+    specification: makeSpecification(),
+    contentStandards: makeContentStandards(),
+    seoGuidelines: makeSeoGuidelines(),
+  });
+
+  // Should not throw — topic.claim.direction is used both as {{var}} and conditional
+  const result = renderPrompt(template, ctx, { strict: true });
+  assert.ok(result.includes("Conditional section."));
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 11. ENUM VALUES INTROSPECTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+section("Enum Values");
+
+test("getEnumValues returns set for topic.condition", () => {
+  const vals = getEnumValues("topic.condition");
+  assert.ok(vals);
+  assert.ok(vals.has("acne_acne_scars"));
+  assert.ok(vals.has("redness_hyperpigmentation"));
+  assert.ok(vals.has("dryness_premature_aging"));
+  assert.ok(vals.has("oily_skin"));
+  assert.equal(vals.size, 4);
+});
+
+test("getEnumValues returns set for topic.category", () => {
+  const vals = getEnumValues("topic.category");
+  assert.ok(vals);
+  assert.equal(vals.size, 10);
+  assert.ok(vals.has("vegan_foods_that_help_skin"));
+  assert.ok(vals.has("habits_that_harm_skin"));
+});
+
+test("getEnumValues returns set for topic.claim.direction", () => {
+  const vals = getEnumValues("topic.claim.direction");
+  assert.ok(vals);
+  assert.equal(vals.size, 2);
+  assert.ok(vals.has("helps"));
+  assert.ok(vals.has("harms"));
+});
+
+test("getEnumValues returns undefined for free-text variables", () => {
+  assert.equal(getEnumValues("topic.entity"), undefined);
+  assert.equal(getEnumValues("topic.name"), undefined);
+  assert.equal(getEnumValues("research.runId"), undefined);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 12. REAL TEMPLATE INTEGRATION WITH CONDITIONALS
+// ═══════════════════════════════════════════════════════════════════════════
+
+section("Real Template with Conditionals");
+
+test("deep-research.md parses with conditionals", () => {
+  const loader = new PromptTemplateLoader("prompts/");
+  const tmpl = loader.load("deep-research.md");
+
+  assert.ok(tmpl.conditionals.length > 0, "Should have conditional blocks");
+
+  // Should have direction conditionals
+  const directionConds = tmpl.conditionals.filter(
+    (c) => c.variable === "topic.claim.direction"
+  );
+  assert.ok(directionConds.length >= 2, "Should have helps + harms conditionals");
+
+  // Should have category conditionals
+  const categoryConds = tmpl.conditionals.filter(
+    (c) => c.variable === "topic.category"
+  );
+  assert.ok(categoryConds.length >= 5, "Should have category-specific conditionals");
+
+  // Should have condition conditionals
+  const conditionConds = tmpl.conditionals.filter(
+    (c) => c.variable === "topic.condition"
+  );
+  assert.ok(conditionConds.length >= 4, "Should have skin-condition conditionals");
+});
+
+test("deep-research.md renders ayurvedic herb topic correctly", () => {
+  const loader = new PromptTemplateLoader("prompts/");
+  loader.clearCache();
+  const tmpl = loader.load("deep-research.md");
+
+  const ctx = buildPromptContext({
+    topic: makeTopic(), // turmeric, helps, redness, ayurvedic herbs
+    specification: makeSpecification(),
+    contentStandards: makeContentStandards(),
+    seoGuidelines: makeSeoGuidelines(),
+  });
+
+  const result = renderPrompt(tmpl, ctx, { strict: false });
+
+  // Should include helps-specific section
+  assert.ok(result.includes("Benefit-Specific Research Requirements"));
+  // Should include ayurvedic herb section
+  assert.ok(result.includes("Ayurvedic Topical Herb Research"));
+  // Should include redness section
+  assert.ok(result.includes("Redness & Hyperpigmentation Considerations"));
+  // Should NOT include harms section
+  assert.ok(!result.includes("Harm-Specific Research Requirements"));
+  // Should NOT include acne section
+  assert.ok(!result.includes("Acne-Specific Considerations"));
+  // Should NOT include animal ingredient section
+  assert.ok(!result.includes("Animal-Ingredient Dietary Research"));
+  // Should NOT include preliminary warning (confidence is established)
+  assert.ok(!result.includes("Low-Confidence Evidence Note"));
+  // No unresolved placeholders or sentinels
+  assert.ok(!result.includes("{{"), "No unresolved placeholders");
+  assert.ok(!result.includes("__UNSET__"), "No UNSET sentinels");
+});
+
+test("deep-research.md renders dairy/harms/acne topic correctly", () => {
+  const loader = new PromptTemplateLoader("prompts/");
+  loader.clearCache();
+  const tmpl = loader.load("deep-research.md");
+
+  const dairyTopic = makeTopic({
+    id: "dairy_harms_acne",
+    primaryEntity: "dairy",
+    entityType: "food",
+    claim: { direction: "harms", mechanism: "contains hormones that stimulate sebum production", confidence: "emerging" },
+    name: "Dairy Worsens Acne",
+    condition: "acne_acne_scars",
+    category: "animal_ingredients_in_food_that_harm_skin",
+  });
+
+  const ctx = buildPromptContext({
+    topic: dairyTopic,
+    specification: makeSpecification(),
+    contentStandards: makeContentStandards(),
+    seoGuidelines: makeSeoGuidelines(),
+  });
+
+  const result = renderPrompt(tmpl, ctx, { strict: false });
+
+  // Should include harms-specific section
+  assert.ok(result.includes("Harm-Specific Research Requirements"));
+  // Should include animal ingredient dietary section
+  assert.ok(result.includes("Animal-Ingredient Dietary Research"));
+  assert.ok(result.includes("IGF-1, mTORC1"));
+  // Should include acne section
+  assert.ok(result.includes("Acne-Specific Considerations"));
+  // Should NOT include helps section
+  assert.ok(!result.includes("Benefit-Specific Research Requirements"));
+  // Should NOT include redness section
+  assert.ok(!result.includes("Redness & Hyperpigmentation Considerations"));
+  // No unresolved
+  assert.ok(!result.includes("{{"));
+  assert.ok(!result.includes("__UNSET__"));
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
