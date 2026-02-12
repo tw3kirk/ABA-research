@@ -42,6 +42,12 @@ import {
   ConditionalParseError,
   type ConditionalBlock,
 } from "./conditional.js";
+import {
+  buildPromptConstraints,
+  formatConstraints,
+  countConstraints,
+  type PromptConstraints,
+} from "./constraints.js";
 import type { Topic } from "../topics/schema.js";
 import type { ResearchSpecification } from "../specification/schema.js";
 import type { ContentStandards } from "../standards/content-schema.js";
@@ -1408,6 +1414,457 @@ test("deep-research.md renders dairy/harms/acne topic correctly", () => {
   // No unresolved
   assert.ok(!result.includes("{{"));
   assert.ok(!result.includes("__UNSET__"));
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 13. CONSTRAINT GENERATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+section("Constraint Generation");
+
+test("buildPromptConstraints with topic only produces directional rules", () => {
+  const constraints = buildPromptConstraints({ topic: makeTopic() });
+
+  // No specification or content standards → no universal rules
+  assert.equal(constraints.universal.length, 0);
+  // Should still have directional rules from claim direction
+  assert.ok(constraints.directional.length > 0);
+});
+
+test("buildPromptConstraints with specification produces evidence rules", () => {
+  const constraints = buildPromptConstraints({
+    topic: makeTopic(),
+    specification: makeSpecification(),
+  });
+
+  const evidenceRules = constraints.universal.filter((r) => r.category === "evidence");
+  assert.ok(evidenceRules.length >= 3, "Should have multiple evidence rules");
+
+  const texts = evidenceRules.map((r) => r.text);
+  assert.ok(texts.some((t) => t.includes("2 citation")), "Should include citation count");
+  assert.ok(texts.some((t) => t.includes("3 independent source")), "Should include source count");
+  assert.ok(texts.some((t) => t.includes("10 years")), "Should include source age");
+});
+
+test("buildPromptConstraints with specification produces source policy rules", () => {
+  const constraints = buildPromptConstraints({
+    topic: makeTopic(),
+    specification: makeSpecification(),
+  });
+
+  const policyRules = constraints.universal.filter((r) => r.category === "source_policy");
+  assert.ok(policyRules.length >= 1, "Should have source policy rules");
+
+  const texts = policyRules.map((r) => r.text);
+  assert.ok(texts.some((t) => t.includes("preprint")), "Should restrict preprints");
+  assert.ok(texts.some((t) => t.includes("peer-reviewed")), "Should require peer review");
+});
+
+test("buildPromptConstraints with contentStandards produces forbidden content rules", () => {
+  const constraints = buildPromptConstraints({
+    topic: makeTopic(),
+    contentStandards: makeContentStandards(),
+  });
+
+  const forbiddenRules = constraints.universal.filter((r) => r.category === "forbidden_content");
+  assert.ok(forbiddenRules.length >= 1, "Should have forbidden content rules");
+  assert.ok(
+    forbiddenRules.some((r) => r.text.includes("miracle cure")),
+    "Should include forbidden phrase"
+  );
+});
+
+test("buildPromptConstraints with contentStandards produces brand rules", () => {
+  const constraints = buildPromptConstraints({
+    topic: makeTopic(),
+    contentStandards: makeContentStandards(),
+  });
+
+  const brandRules = constraints.universal.filter((r) => r.category === "brand");
+  assert.ok(brandRules.length >= 1, "Should have brand alignment rules");
+  assert.ok(
+    brandRules.some((r) => r.text.includes("vegan")),
+    "Should include vegan alignment"
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 14. DIRECTIONAL CONSTRAINT GENERATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+section("Directional Constraints");
+
+test("helps topic gets exclusion: do not include harms evidence", () => {
+  const constraints = buildPromptConstraints({
+    topic: makeTopic(), // direction = "helps"
+  });
+
+  const exclusions = constraints.directional.filter((r) => r.category === "exclusion");
+  assert.ok(exclusions.length >= 1);
+  assert.ok(
+    exclusions.some((r) => r.text.includes("harms") && r.text.includes("turmeric")),
+    "Should exclude harms evidence for helps topic"
+  );
+});
+
+test("harms topic gets exclusion: do not include helps evidence", () => {
+  const dairyTopic = makeTopic({
+    id: "dairy_harms_acne",
+    primaryEntity: "dairy",
+    entityType: "food",
+    claim: { direction: "harms", mechanism: "hormones stimulate sebum production", confidence: "emerging" },
+    name: "Dairy Worsens Acne",
+    condition: "acne_acne_scars",
+    category: "animal_ingredients_in_food_that_harm_skin",
+  });
+
+  const constraints = buildPromptConstraints({ topic: dairyTopic });
+
+  const exclusions = constraints.directional.filter((r) => r.category === "exclusion");
+  assert.ok(
+    exclusions.some((r) => r.text.includes("helps") && r.text.includes("dairy")),
+    "Should exclude helps evidence for harms topic"
+  );
+  assert.ok(
+    exclusions.some((r) => r.text.includes("normalizes") || r.text.includes("minimizes")),
+    "Should prevent minimizing harmful effect"
+  );
+});
+
+test("animal category gets ethical and vegan-alternative constraints", () => {
+  const dairyTopic = makeTopic({
+    id: "dairy_harms_acne",
+    primaryEntity: "dairy",
+    entityType: "food",
+    claim: { direction: "harms", mechanism: "hormones stimulate sebum production", confidence: "emerging" },
+    name: "Dairy Worsens Acne",
+    condition: "acne_acne_scars",
+    category: "animal_ingredients_in_food_that_harm_skin",
+  });
+
+  const constraints = buildPromptConstraints({ topic: dairyTopic });
+
+  const allText = constraints.directional.map((r) => r.text).join(" ");
+  assert.ok(allText.includes("welfare") || allText.includes("ethical"), "Should include welfare/ethical considerations");
+  assert.ok(allText.includes("plant-based") || allText.includes("vegan"), "Should reference alternatives");
+});
+
+test("skincare chemicals category gets regulatory constraint", () => {
+  const parabenTopic = makeTopic({
+    id: "parabens_harm_oily",
+    primaryEntity: "parabens",
+    entityType: "chemical",
+    claim: { direction: "harms", mechanism: "disrupts endocrine function", confidence: "emerging" },
+    name: "Parabens Worsen Oily Skin",
+    condition: "oily_skin",
+    category: "skincare_chemicals_that_harm_skin",
+  });
+
+  const constraints = buildPromptConstraints({ topic: parabenTopic });
+
+  const allText = constraints.directional.map((r) => r.text).join(" ");
+  assert.ok(allText.includes("FDA") || allText.includes("EU SCCS"), "Should reference regulatory bodies");
+  assert.ok(allText.includes("industry-funded"), "Should flag industry-funded studies");
+});
+
+test("habits category gets modifiable-behavior constraint", () => {
+  const habitTopic = makeTopic({
+    id: "face_touching_harms_acne",
+    primaryEntity: "face touching",
+    entityType: "habit",
+    claim: { direction: "harms", mechanism: "transfers bacteria to skin", confidence: "established" },
+    name: "Face Touching Worsens Acne",
+    condition: "acne_acne_scars",
+    category: "habits_that_harm_skin",
+  });
+
+  const constraints = buildPromptConstraints({ topic: habitTopic });
+
+  const allText = constraints.directional.map((r) => r.text).join(" ");
+  assert.ok(allText.includes("modifiable"), "Should focus on modifiable behaviors");
+  assert.ok(allText.includes("genetic"), "Should exclude genetic predispositions");
+});
+
+test("ayurvedic herb gets traditional-vs-clinical constraint", () => {
+  const constraints = buildPromptConstraints({
+    topic: makeTopic(), // turmeric, herb, ayurvedic_herbs_in_skincare_that_help_skin
+  });
+
+  const allText = constraints.directional.map((r) => r.text).join(" ");
+  assert.ok(
+    allText.includes("traditional") && allText.includes("clinical"),
+    "Should distinguish traditional from clinical evidence"
+  );
+});
+
+test("preliminary confidence gets evidence-limitation constraint", () => {
+  const prelimTopic = makeTopic({
+    id: "kale_helps_redness",
+    primaryEntity: "kale",
+    entityType: "food",
+    claim: { direction: "helps", mechanism: "antioxidant vitamin C", confidence: "preliminary" },
+    name: "Kale Reduces Redness",
+    condition: "redness_hyperpigmentation",
+    category: "vegan_foods_that_help_skin",
+  });
+
+  const constraints = buildPromptConstraints({ topic: prelimTopic });
+
+  const allText = constraints.directional.map((r) => r.text).join(" ");
+  assert.ok(allText.includes("preliminary"), "Should flag preliminary evidence");
+  assert.ok(allText.includes("in-vitro") || allText.includes("animal"), "Should mention study limitations");
+});
+
+test("emerging confidence gets hedging-language constraint", () => {
+  const emergingTopic = makeTopic({
+    id: "dairy_harms_acne",
+    primaryEntity: "dairy",
+    entityType: "food",
+    claim: { direction: "harms", mechanism: "hormones stimulate sebum production", confidence: "emerging" },
+    name: "Dairy Worsens Acne",
+    condition: "acne_acne_scars",
+    category: "animal_ingredients_in_food_that_harm_skin",
+  });
+
+  const constraints = buildPromptConstraints({ topic: emergingTopic });
+
+  const allText = constraints.directional.map((r) => r.text).join(" ");
+  assert.ok(allText.includes("suggests") || allText.includes("may"), "Should require hedging language");
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 15. CONSTRAINT DETERMINISM & STABILITY
+// ═══════════════════════════════════════════════════════════════════════════
+
+section("Constraint Determinism");
+
+test("same inputs produce identical constraints", () => {
+  const input = {
+    topic: makeTopic(),
+    specification: makeSpecification(),
+    contentStandards: makeContentStandards(),
+  };
+
+  const first = buildPromptConstraints(input);
+  const second = buildPromptConstraints(input);
+
+  const firstText = formatConstraints(first);
+  const secondText = formatConstraints(second);
+
+  assert.equal(firstText, secondText, "Constraint text must be stable across calls");
+});
+
+test("constraint text is stable across renders", () => {
+  const input = {
+    topic: makeTopic(),
+    specification: makeSpecification(),
+    contentStandards: makeContentStandards(),
+  };
+
+  const constraints = buildPromptConstraints(input);
+  const text1 = formatConstraints(constraints);
+  const text2 = formatConstraints(constraints);
+
+  assert.equal(text1, text2, "formatConstraints must be deterministic");
+});
+
+test("different topics produce different directional constraints", () => {
+  const helpsTopic = makeTopic();
+  const harmsTopic = makeTopic({
+    id: "dairy_harms_acne",
+    primaryEntity: "dairy",
+    entityType: "food",
+    claim: { direction: "harms", mechanism: "hormones stimulate sebum production", confidence: "emerging" },
+    name: "Dairy Worsens Acne",
+    condition: "acne_acne_scars",
+    category: "animal_ingredients_in_food_that_harm_skin",
+  });
+
+  const helpsConstraints = buildPromptConstraints({ topic: helpsTopic });
+  const harmsConstraints = buildPromptConstraints({ topic: harmsTopic });
+
+  const helpsText = formatConstraints(helpsConstraints);
+  const harmsText = formatConstraints(harmsConstraints);
+
+  assert.notEqual(helpsText, harmsText, "Different directions must produce different constraints");
+  assert.ok(helpsText.includes("turmeric"), "Should reference helps entity");
+  assert.ok(harmsText.includes("dairy"), "Should reference harms entity");
+});
+
+test("countConstraints returns correct total", () => {
+  const constraints = buildPromptConstraints({
+    topic: makeTopic(),
+    specification: makeSpecification(),
+    contentStandards: makeContentStandards(),
+  });
+
+  const total = countConstraints(constraints);
+  assert.equal(total, constraints.universal.length + constraints.directional.length);
+  assert.ok(total > 5, "Full input should produce many constraints");
+});
+
+test("constraints are frozen", () => {
+  const constraints = buildPromptConstraints({ topic: makeTopic() });
+
+  assert.ok(Object.isFrozen(constraints));
+  assert.ok(Object.isFrozen(constraints.universal));
+  assert.ok(Object.isFrozen(constraints.directional));
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 16. CONSTRAINT FORMATTING
+// ═══════════════════════════════════════════════════════════════════════════
+
+section("Constraint Formatting");
+
+test("formatConstraints includes heading and subheadings", () => {
+  const constraints = buildPromptConstraints({
+    topic: makeTopic(),
+    specification: makeSpecification(),
+    contentStandards: makeContentStandards(),
+  });
+
+  const text = formatConstraints(constraints);
+  assert.ok(text.includes("## Constraints & Exclusions"), "Should have main heading");
+  assert.ok(text.includes("### Universal Constraints"), "Should have universal subheading");
+  assert.ok(text.includes("### Topic-Specific Constraints"), "Should have directional subheading");
+});
+
+test("formatConstraints includes category labels", () => {
+  const constraints = buildPromptConstraints({
+    topic: makeTopic(),
+    specification: makeSpecification(),
+    contentStandards: makeContentStandards(),
+  });
+
+  const text = formatConstraints(constraints);
+  assert.ok(text.includes("[evidence]"), "Should have evidence category label");
+  assert.ok(text.includes("[source_policy]"), "Should have source_policy category label");
+  assert.ok(text.includes("[exclusion]"), "Should have exclusion category label");
+});
+
+test("formatConstraints with no rules produces fallback message", () => {
+  // Build constraints with no spec or standards, for a topic with no special
+  // category characteristics that would still produce directional rules.
+  // Actually, every topic gets directional rules. So we verify the fallback
+  // by formatting an empty PromptConstraints.
+  const empty: PromptConstraints = { universal: [], directional: [] };
+  const text = formatConstraints(empty);
+  assert.ok(text.includes("No additional constraints"), "Should have fallback message");
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 17. CONSTRAINT INJECTION IN RENDERER
+// ═══════════════════════════════════════════════════════════════════════════
+
+section("Constraint Injection");
+
+test("renderPrompt appends constraints when provided", () => {
+  const source = "Topic: {{topic.entity}}.";
+  const template = parseTemplate(source, "inject-test");
+
+  const ctx = buildPromptContext({ topic: makeTopic() });
+  const constraints = buildPromptConstraints({
+    topic: makeTopic(),
+    specification: makeSpecification(),
+  });
+
+  const result = renderPrompt(template, ctx, { strict: false, constraints });
+
+  assert.ok(result.startsWith("Topic: turmeric."), "Should start with template content");
+  assert.ok(result.includes("## Constraints & Exclusions"), "Should include constraint heading");
+  assert.ok(result.includes("[evidence]"), "Should include constraint rules");
+});
+
+test("renderPrompt without constraints produces no constraint section", () => {
+  const source = "Topic: {{topic.entity}}.";
+  const template = parseTemplate(source, "no-inject-test");
+
+  const ctx = buildPromptContext({ topic: makeTopic() });
+  const result = renderPrompt(template, ctx, { strict: false });
+
+  assert.ok(!result.includes("Constraints & Exclusions"), "Should not include constraints");
+  assert.equal(result, "Topic: turmeric.");
+});
+
+test("constraints are appended after all template processing", () => {
+  const source =
+    '{{#if topic.claim.direction == "helps"}}BENEFIT.{{/if}}\n' +
+    "Entity: {{topic.entity}}.";
+  const template = parseTemplate(source, "order-test");
+
+  const ctx = buildPromptContext({ topic: makeTopic() });
+  const constraints = buildPromptConstraints({ topic: makeTopic() });
+
+  const result = renderPrompt(template, ctx, { strict: false, constraints });
+
+  // Find positions: template content should come before constraints
+  const benefitPos = result.indexOf("BENEFIT.");
+  const entityPos = result.indexOf("Entity: turmeric.");
+  const constraintPos = result.indexOf("## Constraints & Exclusions");
+
+  assert.ok(benefitPos < entityPos, "Conditional content before variable content");
+  assert.ok(entityPos < constraintPos, "Template content before constraints");
+});
+
+test("same template + different topics produce different constraint sections", () => {
+  const source = "Research: {{topic.entity}}.";
+  const template = parseTemplate(source, "diff-constraints");
+
+  const helpsTopic = makeTopic();
+  const harmsTopic = makeTopic({
+    id: "dairy_harms_acne",
+    primaryEntity: "dairy",
+    entityType: "food",
+    claim: { direction: "harms", mechanism: "hormones stimulate sebum", confidence: "emerging" },
+    name: "Dairy Worsens Acne",
+    condition: "acne_acne_scars",
+    category: "animal_ingredients_in_food_that_harm_skin",
+  });
+
+  const helpsCtx = buildPromptContext({ topic: helpsTopic });
+  const harmsCtx = buildPromptContext({ topic: harmsTopic });
+
+  const helpsConstraints = buildPromptConstraints({ topic: helpsTopic });
+  const harmsConstraints = buildPromptConstraints({ topic: harmsTopic });
+
+  const helpsResult = renderPrompt(template, helpsCtx, { strict: false, constraints: helpsConstraints });
+  const harmsResult = renderPrompt(template, harmsCtx, { strict: false, constraints: harmsConstraints });
+
+  // Both should have constraint sections
+  assert.ok(helpsResult.includes("## Constraints & Exclusions"));
+  assert.ok(harmsResult.includes("## Constraints & Exclusions"));
+
+  // But constraint content should differ
+  assert.ok(helpsResult.includes('"turmeric" harms'), "Helps should exclude harms evidence");
+  assert.ok(harmsResult.includes('"dairy" helps'), "Harms should exclude helps evidence");
+
+  // Harms/animal topic should have additional constraints
+  assert.ok(harmsResult.includes("welfare") || harmsResult.includes("ethical"));
+});
+
+test("constraints cannot be bypassed by template content", () => {
+  // Even if a template tries to include its own "Constraints" section,
+  // the real constraints are appended at the very end.
+  const source = "## Constraints & Exclusions\nFake constraints here.\n\nEntity: {{topic.entity}}.";
+  const template = parseTemplate(source, "bypass-test");
+
+  const ctx = buildPromptContext({ topic: makeTopic() });
+  const constraints = buildPromptConstraints({
+    topic: makeTopic(),
+    specification: makeSpecification(),
+  });
+
+  const result = renderPrompt(template, ctx, { strict: false, constraints });
+
+  // Count occurrences of the heading
+  const headingMatches = result.match(/## Constraints & Exclusions/g);
+  assert.equal(headingMatches?.length, 2, "Should have both template and injected headings");
+
+  // The real constraints (from the injected section) should appear after the fake one
+  const fakePos = result.indexOf("Fake constraints here.");
+  const realPos = result.indexOf("[evidence]");
+  assert.ok(realPos > fakePos, "Real constraints appear after any template content");
 });
 
 // ═══════════════════════════════════════════════════════════════════════════

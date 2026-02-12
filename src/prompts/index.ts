@@ -105,3 +105,13 @@ export {
   type ConditionalBlock,
   type ConditionalOperator,
 } from "./conditional.js";
+
+// Constraints
+export {
+  buildPromptConstraints,
+  formatConstraints,
+  countConstraints,
+  type PromptConstraints,
+  type ConstraintRule,
+  type ConstraintInput,
+} from "./constraints.js";
