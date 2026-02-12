@@ -91,6 +91,13 @@ import {
   buildPromptContext,
   renderPrompt,
   buildPromptConstraints,
+  computePromptHash,
+  computeTemplateVersion,
+  createSnapshot,
+  storeSnapshot as storeVersionedSnapshot,
+  loadSnapshotByHash,
+  verifySnapshot,
+  listSnapshots as listVersionedSnapshots,
 } from "../prompts/index.js";
 
 // ============================================================
@@ -101,6 +108,7 @@ interface PreviewResult {
   topicId: string;
   templateName: string;
   rendered: string;
+  templateSource: string;
   metadata: {
     topicEntity: string;
     topicCondition: string;
@@ -143,6 +151,10 @@ function parseCliArgs() {
       prompts: { type: "string", default: "prompts" },
       save: { type: "string" },
       against: { type: "string" },
+      store: { type: "boolean", default: false },
+      snapshot: { type: "string" },
+      "snapshot-dir": { type: "string", default: "snapshots/prompts" },
+      "list-snapshots": { type: "boolean", default: false },
       "no-constraints": { type: "boolean", default: false },
       "no-color": { type: "boolean", default: false },
       json: { type: "boolean", default: false },
@@ -161,6 +173,11 @@ Preview mode (default):
 Diff mode:
   npm run diff-prompt -- --topic <topicId> --template <filename> --against <snapshotId>
 
+Snapshot mode:
+  npm run preview-prompt -- --topic <topicId> --template <filename> --store
+  npm run preview-prompt -- --snapshot <hash> --topic <topicId> --template <filename>
+  npm run preview-prompt -- --list-snapshots --topic <topicId> --template <filename>
+
 Options:
   --topic <topicId>       Topic ID from the topics file (required)
   --template <filename>   Template filename in prompts/ directory (required)
@@ -168,8 +185,12 @@ Options:
   --standards <path>      Path to content standards JSON (default: config/content-standards.json)
   --seo <path>            Path to SEO guidelines JSON (default: config/seo-guidelines.json)
   --prompts <dir>         Path to prompts directory (default: prompts/)
-  --save <snapshotId>     Save rendered prompt as a named snapshot
-  --against <snapshotId>  Diff current prompt against a saved snapshot
+  --save <snapshotId>     Save rendered prompt as a named diff snapshot
+  --against <snapshotId>  Diff current prompt against a saved diff snapshot
+  --store                 Store rendered prompt as a versioned snapshot (content-addressed)
+  --snapshot <hash>       Load and display an existing versioned snapshot by hash
+  --snapshot-dir <dir>    Base directory for versioned snapshots (default: snapshots/prompts)
+  --list-snapshots        List all versioned snapshot hashes for the topic/template pair
   --no-constraints        Skip constraint injection
   --no-color              Disable ANSI colors
   --json                  Output as JSON (includes metadata)
@@ -512,6 +533,7 @@ function renderPreview(options: {
     topicId: topic.id,
     templateName,
     rendered,
+    templateSource: template.source,
     metadata: {
       topicEntity: topic.primaryEntity,
       topicCondition: topic.condition,
@@ -545,6 +567,7 @@ function printPreviewHeader(result: PreviewResult): void {
   console.log(`  ${c("cyan", "Characters:")} ${result.metadata.charCount}`);
   console.log(`  ${c("cyan", "Variables:")}  ${result.metadata.variableCount}`);
   console.log(`  ${c("cyan", "Constraints:")} ${result.metadata.constraintsIncluded ? "yes" : "no"}`);
+  console.log(`  ${c("cyan", "Hash:")}        ${computePromptHash(result.rendered)}`);
   console.log("");
   console.log("─".repeat(60));
   console.log("");
@@ -575,6 +598,75 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  const snapshotDir = args["snapshot-dir"]!;
+
+  // Handle --list-snapshots (no render needed)
+  if (args["list-snapshots"]) {
+    const hashes = listVersionedSnapshots(args.template, args.topic, snapshotDir);
+    if (args.json) {
+      console.log(JSON.stringify({
+        mode: "list-snapshots",
+        topic: args.topic,
+        template: args.template,
+        hashes,
+        count: hashes.length,
+      }, null, 2));
+    } else if (hashes.length === 0) {
+      console.log(c("dim", "No snapshots found."));
+    } else {
+      console.log(c("bold", `Snapshots for ${args.topic} / ${args.template}:`));
+      for (const hash of hashes) {
+        console.log(`  ${hash}`);
+      }
+      console.log(c("dim", `\n  ${hashes.length} snapshot(s)`));
+    }
+    process.exit(0);
+    return;
+  }
+
+  // Handle --snapshot <hash> (load existing snapshot, no render needed)
+  if (args.snapshot) {
+    const result = loadSnapshotByHash(args.snapshot, args.template, args.topic, snapshotDir);
+    if (!result.success) {
+      console.error(c("red", `Error: ${result.error}`));
+      process.exit(1);
+    }
+
+    const snap = result.snapshot!;
+    const verification = verifySnapshot(snap);
+
+    if (args.json) {
+      console.log(JSON.stringify({
+        mode: "snapshot",
+        hash: snap.hash,
+        verified: verification.valid,
+        metadata: snap.metadata,
+        rendered: snap.renderedText,
+      }, null, 2));
+    } else {
+      console.log("");
+      console.log(c("bold", "═".repeat(60)));
+      console.log(c("bold", " Snapshot Viewer"));
+      console.log(c("bold", "═".repeat(60)));
+      console.log("");
+      console.log(`  ${c("cyan", "Hash:")}             ${snap.hash}`);
+      console.log(`  ${c("cyan", "Integrity:")}        ${verification.valid ? c("green", "verified") : c("red", "FAILED")}`);
+      console.log(`  ${c("cyan", "Topic:")}            ${snap.metadata.topicId}`);
+      console.log(`  ${c("cyan", "Template:")}         ${snap.metadata.templateName}`);
+      console.log(`  ${c("cyan", "Template version:")} ${snap.metadata.templateVersion}`);
+      console.log(`  ${c("cyan", "Git commit:")}       ${snap.metadata.gitCommit}`);
+      console.log(`  ${c("cyan", "Git branch:")}       ${snap.metadata.gitBranch}`);
+      console.log(`  ${c("cyan", "Created:")}          ${snap.metadata.createdAt}`);
+      console.log("");
+      console.log("─".repeat(60));
+      console.log("");
+      console.log(snap.renderedText);
+    }
+
+    process.exit(verification.valid ? 0 : 1);
+    return;
+  }
+
   // Render the prompt
   const preview = renderPreview({
     topicId: args.topic,
@@ -585,6 +677,46 @@ async function main(): Promise<void> {
     promptsDir: args.prompts!,
     includeConstraints: !args["no-constraints"],
   });
+
+  // Handle --store (versioned content-addressed snapshot)
+  if (args.store) {
+    let gitCommit = "unknown";
+    let gitBranch = "unknown";
+    try {
+      const { execSync } = await import("node:child_process");
+      gitCommit = execSync("git rev-parse HEAD", { stdio: "pipe" }).toString().trim();
+      gitBranch = execSync("git rev-parse --abbrev-ref HEAD", { stdio: "pipe" }).toString().trim();
+    } catch {
+      // Not in a git repo — use defaults
+    }
+
+    const templateVersion = computeTemplateVersion(preview.templateSource);
+    const snapshot = createSnapshot({
+      renderedText: preview.rendered,
+      templateName: preview.templateName,
+      templateVersion,
+      topicId: preview.topicId,
+      gitCommit,
+      gitBranch,
+    });
+
+    const filePath = storeVersionedSnapshot(snapshot, snapshotDir);
+    const hash = snapshot.hash;
+
+    if (args.json) {
+      console.log(JSON.stringify({
+        mode: "store",
+        hash,
+        path: filePath,
+        metadata: snapshot.metadata,
+      }, null, 2));
+      process.exit(0);
+      return;
+    }
+
+    console.error(c("green", `Versioned snapshot stored: ${hash}`));
+    console.error(c("dim", `  Path: ${filePath}`));
+  }
 
   // Handle --save
   if (args.save) {
