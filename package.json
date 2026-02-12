@@ -9,7 +9,9 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "scaffold": "node --import tsx scripts/scaffold.ts",
-    "validate-config": "node --import tsx src/cli/validate-config.ts"
+    "validate-config": "node --import tsx src/cli/validate-config.ts",
+    "preview-prompt": "node --import tsx src/cli/preview-prompt.ts",
+    "diff-prompt": "node --import tsx src/cli/preview-prompt.ts"
   },
   "engines": {
     "node": ">=18.0.0"
