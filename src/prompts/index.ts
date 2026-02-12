@@ -115,3 +115,20 @@ export {
   type ConstraintRule,
   type ConstraintInput,
 } from "./constraints.js";
+
+// Snapshots
+export {
+  computePromptHash,
+  createSnapshot,
+  computeTemplateVersion,
+  storeSnapshot,
+  loadSnapshotByHash,
+  verifySnapshot,
+  getSnapshotPath,
+  listSnapshots,
+  type PromptSnapshot,
+  type SnapshotMetadata,
+  type CreateSnapshotInput,
+  type SnapshotLoadResult,
+  type SnapshotVerifyResult,
+} from "./snapshot.js";
